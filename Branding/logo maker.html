@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Malta Veterans Association Logo Maker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Secular+One&display=swap" rel="stylesheet">
+  <style>
+    /* Global styles */
+    body {
+      font-family: 'Secular One', sans-serif;
+      margin: 0;
+      background-color: transparent;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Header styles */
+    header {
+      background-color: #003366;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 32px;
+    }
+
+    /* Options section styles */
+    .options {
+      flex: 1 1 400px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 30px;
+      margin-right: 40px;
+    }
+
+    .option {
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .option label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .option select {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    /* Result section styles */
+    #result {
+      flex: 1 1 400px;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #logoImage {
+      max-width: 100%;
+      height: 300px;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      animation: slideIn 0.5s ease;
+    }
+
+    #downloadBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #003366;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    #downloadBtn:hover {
+      background-color: #004d99;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      0% {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slideIn {
+      0% {
+        transform: translateX(-20px);
+      }
+
+      100% {
+        transform: translateX(0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="options">
+      <div class="option">
+        <label for="badgeColor">Badge Color:</label>
+        <select id="badgeColor">
+          <option value="colored">Colored</option>
+          <option value="black">Black</option>
+          <option value="comic">Comic</option>
+        </select>
+      </div>
+
+      <div class="option">
+        <label for="backgroundType">Background Type:</label>
+        <select id="backgroundType">
+          <option value="circle">Circle</option>
+          <option value="shield">Shield</option>
+          <option value="blackshield">Black and White Shield</option>
+          <option value="none">None</option>
+        </select>
+      </div>
+
+      <div class="option">
+        <label for="textType">Text Type:</label>
+        <select id="textType">
+          <option value="long">Full Name</option>
+          <option value="short">Abbriviated</option>
+          <option value="none">No Text</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="result">
+      <img id="logoImage" alt="Generated logo" src="">
+      <button id="downloadBtn">Download SVG</button>
+    </div>
+  </div>
+
+  <script>
+    const badgeColor = document.getElementById('badgeColor');
+    const backgroundType = document.getElementById('backgroundType');
+    const textType = document.getElementById('textType');
+    const logoImage = document.getElementById('logoImage');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    badgeColor.addEventListener('change', generateLogo);
+    backgroundType.addEventListener('change', generateLogo);
+    textType.addEventListener('change', generateLogo);
+
+    function generateLogo()
+    {
+      const options = [
+        badgeColor.value,
+        backgroundType.value,
+        textType.value
+      ];
+      let filenameStr = `${textType.value}/${backgroundType.value}/${badgeColor.value}.svg`;
+
+      const placeholderUrl = `${filenameStr}`;
+      logoImage.src = placeholderUrl;
+      logoImage.alt = `Logo with ${options.join(', ')} style`;
+
+      // Set the download URL
+      downloadBtn.href = placeholderUrl;
+      downloadBtn.setAttribute('download', filenameStr);
+
+      // Add animation class
+      logoImage.classList.add('animated');
+      void logoImage.offsetWidth; // Trigger reflow to reset the animation
+      logoImage.classList.remove('animated');
+    }
+
+    generateLogo();
+  </script>
+</body>
+</html>
