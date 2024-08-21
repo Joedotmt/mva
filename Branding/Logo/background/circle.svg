@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" data-name="Layer 1"
+  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 5305.14 1449.02">
+  <g id="Layer_7" data-name="Layer 7">
+    <g id="Circle">
+      <circle cx="644.46" cy="716.71" r="633.1" style="fill: #f40030; stroke-width: 0px;"/>
+      <path d="M640.96,709.61h633.1c0,347.3-285.8,633.1-633.1,633.1S7.86,1056.91,7.86,709.61h633.1Z" style="fill: #0f32b4; stroke-width: 0px;"/>
+      <circle class="circle-outline" cx="644.46" cy="712.41" r="633.1" style="fill: none; stroke-miterlimit: 10; stroke-width: 21px;"/>
+    </g>
+  </g>
+</svg>
