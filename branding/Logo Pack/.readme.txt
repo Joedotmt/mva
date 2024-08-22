@@ -1,0 +1,2 @@
+.SVG files are vector which means they can be scaled up to huge sizes and not lose any quality
+.PNG files are raster which means they will lose quality if modified
