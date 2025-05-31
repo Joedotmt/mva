@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Malta Veterans Association</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/pocketbase/dist/pocketbase.umd.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #f7f8fc;
+            color: #1c1b1f;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .auth-card {
+            background-color: #fff;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #49454F;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            font-size: 1rem;
+            border: 1px solid #79747E;
+            border-radius: 0.5rem;
+            background-color: #fff;
+            color: #1c1b1f;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #005fb0;
+            box-shadow: 0 0 0 2px rgba(0, 95, 176, 0.3);
+        }
+
+        .form-input::placeholder {
+            color: #9e9e9e;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            font-family: 'Roboto', 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 0.9375rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 2rem;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s, box-shadow 0.2s;
+            text-transform: none;
+        }
+
+        .btn-primary {
+            background-color: #005fb0;
+            color: #ffffff;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary:hover {
+            background-color: #004c8c;
+            box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 4px 5px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-secondary {
+            background-color: #e8e8e8;
+            color: #005fb0;
+            border: 1px solid #c7c7c7;
+        }
+
+        .btn-secondary:hover {
+            background-color: #dcdcdc;
+        }
+
+        .btn-text {
+            background-color: transparent;
+            color: #005fb0;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+
+        .btn-text:hover {
+            background-color: rgba(0, 95, 176, 0.08);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            border-radius: 1.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 8px 10px -5px rgba(0, 0, 0, 0.2), 0 16px 24px 2px rgba(0, 0, 0, 0.14), 0 6px 30px 5px rgba(0, 0, 0, 0.12);
+            width: 100%;
+            max-width: 480px;
+            text-align: left;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: #1c1b1f;
+            margin-bottom: 1rem;
+            padding-left: 0.5rem;
+        }
+
+        .modal-body {
+            font-size: 1rem;
+            color: #49454F;
+            margin-bottom: 1.5rem;
+            padding: 0 0.5rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+
+        .modal-actions .btn {
+            width: auto;
+        }
+
+        #loading-indicator {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(247, 248, 252, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 5px solid #005fb030;
+            border-bottom-color: #005fb0;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .app-header {
+            background-color: #005fb0;
+            color: #ffffff;
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .app-header h1 {
+            font-family: 'Roboto', 'Inter', sans-serif;
+            font-weight: 600;
+        }
+
+        .app-footer {
+            background-color: #f0f0f0;
+            color: #5f6368;
+            padding: 1.5rem 0;
+            font-size: 0.875rem;
+        }
+
+        .input-error {
+            border-color: #ba1a1a !important;
+        }
+
+        .error-message {
+            color: #ba1a1a;
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-indicator" class="hidden">
+        <div class="spinner"></div>
+    </div>
+
+    <div id="message-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 id="message-modal-title" class="modal-header">Message</h3>
+            <p id="message-modal-text" class="modal-body"></p>
+            <div class="modal-actions">
+                <button onclick="hideMessageModal()" class="btn btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="otp-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="modal-header">Enter OTP</h3>
+            <div id="otp-modal-message" class="modal-body">
+                An OTP has been sent to <span id="otp-email-display" class="font-semibold text-gray-700">your email</span>. Please enter it below.
+            </div>
+            <div class="form-group px-2">
+                <label for="otp-code" class="sr-only">OTP Code</label>
+                <input type="text" id="otp-code" name="otp-code" class="form-input text-center tracking-widest text-lg" placeholder="------" maxlength="6">
+            </div>
+            <div class="modal-actions">
+                <button onclick="cancelOtpFlow()" class="btn btn-text">Cancel</button>
+                <button id="verify-otp-btn" class="btn btn-primary">Verify & Login</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="register-confirm-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="modal-header">Create Account?</h3>
+            <p class="modal-body">
+                No account found for <span id="register-email-display" class="font-semibold text-gray-700">your email</span>.
+                Would you like to create a new account?
+            </p>
+            <div class="modal-actions">
+                <button onclick="hideRegisterConfirmModal()" class="btn btn-text">Cancel</button>
+                <button id="confirm-register-btn" class="btn btn-primary">Yes, Create Account</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="veteran-details-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="modal-header">Complete Your Profile</h3>
+            <p class="modal-body">Please provide your details to create an account. All fields are required.</p>
+            <form id="veteran-details-form">
+                <div class="form-group">
+                    <label for="detail-full_name" class="form-label">Full Name</label>
+                    <input type="text" id="detail-full_name" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="detail-id_card_number" class="form-label">ID Card Number</label>
+                    <input type="text" id="detail-id_card_number" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="detail-full_address" class="form-label">Full Home Address</label>
+                    <textarea id="detail-full_address" class="form-input" rows="2" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="detail-phone_number" class="form-label">Phone Number</label>
+                    <input type="tel" id="detail-phone_number" class="form-input" required>
+                </div>
+                <hr class="my-4">
+                <h4 class="text-md font-semibold mb-2 text-gray-700">Next of Kin Details</h4>
+                <div class="form-group">
+                    <label for="detail-next_of_kin_full_name" class="form-label">Next of Kin Full Name</label>
+                    <input type="text" id="detail-next_of_kin_full_name" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="detail-next_of_kin_full_phone_number" class="form-label">Next of Kin Phone Number</label>
+                    <input type="tel" id="detail-next_of_kin_full_phone_number" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="detail-next_of_kin_relationship" class="form-label">Relationship to Next of Kin</label>
+                    <input type="text" id="detail-next_of_kin_relationship" class="form-input" required>
+                </div>
+                <div class="modal-actions mt-6">
+                    <button type="button" onclick="hideVeteranDetailsModal(); cancelOtpFlow();" class="btn btn-text">Cancel</button>
+                    <button type="submit" id="submit-veteran-details-btn" class="btn btn-primary">Submit and Sign In</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <header class="app-header">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <h1 class="text-2xl sm:text-3xl">Malta Veterans Association</h1>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="auth-card">
+            <h2 class="text-2xl font-semibold mb-2 text-center text-gray-800">Member Portal</h2>
+            <p class="text-center text-gray-500 mb-8">Sign in or create an account.</p>
+
+            <div class="form-group flex items-center !mb-4">
+                <input type="checkbox" id="is-manager-checkbox" class="mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                <label for="is-manager-checkbox" class="form-label !mb-0 !text-sm">I am an Admin/Manager</label>
+            </div>
+            <div id="email-entry-step">
+                <div class="form-group">
+                    <label for="email-input" class="form-label">Email Address</label>
+                    <input type="email" id="email-input" name="email-input" class="form-input" placeholder="you@example.com" required>
+                </div>
+                <button id="send-otp-register-btn" class="btn btn-primary mb-6">Continue with Email</button>
+            </div>
+
+            <div class="text-center">
+                <div class="relative my-6">
+                    <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                        <div class="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-white text-gray-500">Or connect with</span>
+                    </div>
+                </div>
+                <button id="google-login-btn" class="btn btn-secondary flex items-center justify-center w-full border !rounded-md">
+                    <svg class="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"></path>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path>
+                        <path d="M1 1h22v22H1z" fill="none"></path>
+                    </svg>
+                    Sign in with Google (Mock)
+                </button>
+                <p class="mt-2 text-xs text-gray-400">Google Sign-In is a mock-up for now.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="app-footer text-center">
+        &copy; <span id="current-year"></span> Malta Veterans Association. All rights reserved.
+        <p class="text-xs mt-1">PocketBase URL: <span id="pb-url-display">Not Connected</span></p>
+    </footer>
+
+    <script>
+        // --- Configuration ---
+        const POCKETBASE_URL = 'http://127.0.0.1:8090'; // Ensure your PocketBase is running here
+        const VETERANS_COLLECTION = 'veterans'; // Auth collection for veterans
+        const MANAGERS_COLLECTION = 'managers'; // Auth collection for managers
+
+        // --- UI Elements ---
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const messageModal = document.getElementById('message-modal');
+        const messageModalTitle = document.getElementById('message-modal-title');
+        const messageModalText = document.getElementById('message-modal-text');
+        const otpModal = document.getElementById('otp-modal');
+        const otpModalMessageElement = document.getElementById('otp-modal-message');
+        const otpCodeInput = document.getElementById('otp-code');
+        const verifyOtpBtn = document.getElementById('verify-otp-btn');
+        const registerConfirmModal = document.getElementById('register-confirm-modal');
+        const registerEmailDisplaySpan = document.getElementById('register-email-display');
+        const confirmRegisterBtn = document.getElementById('confirm-register-btn');
+
+        // Veteran Details Modal Elements
+        const veteranDetailsModal = document.getElementById('veteran-details-modal');
+        const veteranDetailsForm = document.getElementById('veteran-details-form');
+        const detailFullNameInput = document.getElementById('detail-full_name');
+        const detailIdCardNumberInput = document.getElementById('detail-id_card_number');
+        const detailFullAddressInput = document.getElementById('detail-full_address');
+        const detailPhoneNumberInput = document.getElementById('detail-phone_number');
+        const detailNextOfKinFullNameInput = document.getElementById('detail-next_of_kin_full_name');
+        const detailNextOfKinFullPhoneNumberInput = document.getElementById('detail-next_of_kin_full_phone_number');
+        const detailNextOfKinRelationshipInput = document.getElementById('detail-next_of_kin_relationship');
+
+        const emailInput = document.getElementById('email-input');
+        const sendOtpRegisterBtn = document.getElementById('send-otp-register-btn');
+        const googleLoginBtn = document.getElementById('google-login-btn');
+        const isManagerCheckbox = document.getElementById('is-manager-checkbox');
+
+        let pb = null;
+        let emailForOtpProcess = null; // Stores the email being processed
+        let otpRequestContext = { email: null, collection: null, otpId: null, role: null }; // Context for active OTP
+        let tempVeteranDetails = {}; // To store details from the new veteran form
+
+        // --- Utility Functions ---
+        function showLoading() { loadingIndicator.classList.remove('hidden'); loadingIndicator.classList.add('flex'); }
+        function hideLoading() { loadingIndicator.classList.add('hidden'); loadingIndicator.classList.remove('flex'); }
+
+        function showMessage(title, text)
+        {
+            messageModalTitle.textContent = title;
+            messageModalText.textContent = text;
+            messageModal.classList.remove('hidden');
+        }
+        function hideMessageModal() { messageModal.classList.add('hidden'); }
+
+        function showOtpModal(email, isNewRegistration = false)
+        {
+            document.getElementById('otp-email-display').textContent = email;
+            if (isNewRegistration)
+            {
+                otpModalMessageElement.innerHTML = `Your account for <span class="font-semibold text-gray-700">${email}</span> has been created! A code has been sent to your email. Please enter it below.`;
+            } else
+            {
+                otpModalMessageElement.innerHTML = `A code has been sent to <span class="font-semibold text-gray-700">${email}</span>. Please enter it below.`;
+            }
+            otpCodeInput.value = '';
+            otpModal.classList.remove('hidden');
+            otpCodeInput.focus();
+        }
+        function hideOtpModal() { otpModal.classList.add('hidden'); }
+
+        function cancelOtpFlow()
+        {
+            hideOtpModal();
+            hideVeteranDetailsModal();
+            hideRegisterConfirmModal();
+            otpRequestContext = { email: null, collection: null, otpId: null, role: null };
+            // emailForOtpProcess is kept if user wants to retry with same email but different role
+            tempVeteranDetails = {};
+            // Consider resetting emailInput.value if the flow is fully cancelled.
+            // emailInput.value = '';
+        }
+
+        function showRegisterConfirmModal(email)
+        {
+            emailForOtpProcess = email; // Set here, as this is the email we're confirming for
+            registerEmailDisplaySpan.textContent = email;
+            registerConfirmModal.classList.remove('hidden');
+        }
+        function hideRegisterConfirmModal() { registerConfirmModal.classList.add('hidden'); }
+
+        function showVeteranDetailsModal()
+        {
+            hideRegisterConfirmModal();
+            veteranDetailsForm.reset();
+            veteranDetailsModal.classList.remove('hidden');
+            detailFullNameInput.focus();
+        }
+        function hideVeteranDetailsModal() { veteranDetailsModal.classList.add('hidden'); }
+
+        function generateRandomPassword(length = 16)
+        {
+            const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";
+            let password = "";
+            for (let i = 0, n = charset.length; i < length; ++i)
+            {
+                password += charset.charAt(Math.floor(Math.random() * n));
+            }
+            return password;
+        }
+
+        function getAuthTarget()
+        {
+            const isManager = isManagerCheckbox.checked;
+            return {
+                collection: isManager ? MANAGERS_COLLECTION : VETERANS_COLLECTION,
+                role: isManager ? 'admin' : 'veteran',
+                isManager: isManager
+            };
+        }
+
+        function getPocketBaseErrorDetails(error)
+        {
+            let details = error.message || 'Unknown error';
+            if (error.response && error.response.data)
+            {
+                const pbError = error.response.data;
+                if (pbError.message) details = pbError.message;
+                if (pbError.data)
+                {
+                    let fieldErrors = [];
+                    for (const key in pbError.data)
+                    {
+                        fieldErrors.push(`${key}: ${pbError.data[key].message}`);
+                    }
+                    if (fieldErrors.length > 0)
+                    {
+                        details += ` (${fieldErrors.join(', ')})`;
+                    } else if (typeof pbError.data === 'string')
+                    {
+                        details += ` (${pbError.data})`;
+                    } else
+                    {
+                        details += ` (${JSON.stringify(pbError.data)})`;
+                    }
+                }
+            } else if (error.data && error.data.data)
+            { // Fallback for other structures
+                details = JSON.stringify(error.data.data);
+            }
+            return details;
+        }
+
+
+        // --- PocketBase Initialization ---
+        async function initPocketBase()
+        {
+            try
+            {
+                pb = new PocketBase(POCKETBASE_URL);
+                pb.autoCancellation(false); // Recommended for simpler flows
+                document.getElementById('pb-url-display').textContent = POCKETBASE_URL;
+
+                // Check if user is already logged in
+                if (pb.authStore.isValid && pb.authStore.model)
+                {
+                    console.log("User already logged in. Model:", pb.authStore.model);
+                    const collectionName = pb.authStore.model.collectionName;
+                    let userRoleForRedirect;
+                    if (collectionName === MANAGERS_COLLECTION)
+                    {
+                        userRoleForRedirect = 'admin';
+                    } else if (collectionName === VETERANS_COLLECTION)
+                    {
+                        userRoleForRedirect = 'veteran';
+                    } else
+                    {
+                        console.error("Unknown collection for already logged-in user:", collectionName);
+                        pb.authStore.clear(); // Log out user with unknown state
+                        return;
+                    }
+                    redirectToDashboard(userRoleForRedirect, collectionName);
+                }
+            } catch (error)
+            {
+                console.error("Failed to initialize PocketBase:", error);
+                document.getElementById('pb-url-display').textContent = 'Connection Failed!';
+                showMessage("Connection Error", `Could not connect to the backend. ${getPocketBaseErrorDetails(error)}`);
+            }
+        }
+
+        // --- Core Authentication Logic ---
+        async function handleSendOtpOrRegister()
+        {
+            const email = emailInput.value.trim().toLowerCase();
+            if (!email || !/^\S+@\S+\.\S+$/.test(email))
+            {
+                showMessage("Input Error", "Please enter a valid email address.");
+                return;
+            }
+            showLoading();
+            emailForOtpProcess = email; // Store email for the current OTP/registration process
+            const authTarget = getAuthTarget();
+            const tempPassword = generateRandomPassword();
+            let tempUserCreatedId = null;
+
+            try
+            {
+                // Attempt to create a temporary user to check if the email is new for the selected collection.
+                // This is a common pattern to distinguish between login and registration flows.
+                console.log(`Attempting to create temporary user in '${authTarget.collection}' for: ${emailForOtpProcess}`);
+                const tempUserData = {
+                    email: emailForOtpProcess,
+                    password: tempPassword,
+                    passwordConfirm: tempPassword,
+                };
+
+                // Add collection-specific required fields for the temporary user if necessary.
+                // For PocketBase, email, password, passwordConfirm are often enough for a base user.
+                // Ensure your PocketBase collections don't have other *required* fields that would block this temporary creation.
+                if (authTarget.collection === VETERANS_COLLECTION)
+                {
+                    // If 'veterans' has a required 'status' field for creation:
+                    tempUserData.status = 'Temporary'; // Or any placeholder that satisfies schema
+                }
+                // else if (authTarget.collection === MANAGERS_COLLECTION) {
+                //    // If 'managers' has specific required fields for creation:
+                //    tempUserData.manager_specific_field = 'temp_value';
+                // }
+
+                const newTempUser = await pb.collection(authTarget.collection).create(tempUserData);
+                tempUserCreatedId = newTempUser.id;
+                console.log(`Temporary user ${tempUserCreatedId} created in '${authTarget.collection}'. Email is NEW for this collection.`);
+
+                // IMPORTANT: Delete the temporary user immediately.
+                await pb.collection(authTarget.collection).delete(tempUserCreatedId);
+                console.log(`Temporary user ${tempUserCreatedId} deleted.`);
+                tempUserCreatedId = null; // Nullify to prevent accidental re-deletion in finally block
+
+                // Email is new for this collection. Show confirmation to create an account.
+                showRegisterConfirmModal(emailForOtpProcess);
+
+            } catch (error)
+            {
+                // Check if the error is due to the email already existing (validation_not_unique)
+                if (error.status === 400 && error.data?.data?.email?.code === 'validation_not_unique')
+                {
+                    console.log(`User ${emailForOtpProcess} already exists in '${authTarget.collection}'. Sending OTP for login.`);
+                    try
+                    {
+                        // Email exists, so request OTP for login.
+                        const result = await pb.collection(authTarget.collection).requestOTP(emailForOtpProcess);
+                        if (result && result.otpId)
+                        {
+                            otpRequestContext = {
+                                email: emailForOtpProcess,
+                                collection: authTarget.collection,
+                                otpId: result.otpId,
+                                role: authTarget.role
+                            };
+                            showOtpModal(emailForOtpProcess, false); // false: this is for login, not new registration message
+                        } else
+                        {
+                            throw new Error("OTP request did not return an otpId.");
+                        }
+                    } catch (otpError)
+                    {
+                        console.error(`Error sending OTP for existing user ${emailForOtpProcess}:`, otpError);
+                        showMessage("OTP Error", `Failed to send OTP for ${authTarget.role}. ${getPocketBaseErrorDetails(otpError)}`);
+                    }
+                } else
+                {
+                    // Other errors during the temporary user check (e.g., connection issue, schema mismatch for temp user)
+                    console.error(`Error during temp user check for ${emailForOtpProcess} in ${authTarget.collection}:`, error);
+                    showMessage("System Error", `An unexpected error occurred while checking email with ${authTarget.collection}. ${getPocketBaseErrorDetails(error)}`);
+                }
+            } finally
+            {
+                // Safeguard: if deletion of temp user failed for some reason and tempUserCreatedId is still set
+                if (tempUserCreatedId)
+                {
+                    try
+                    {
+                        await pb.collection(authTarget.collection).delete(tempUserCreatedId);
+                        console.log(`Final cleanup of temp user ${tempUserCreatedId} successful.`);
+                    } catch (e)
+                    {
+                        console.error("Final cleanup of temp user failed", e);
+                    }
+                }
+                hideLoading();
+            }
+        }
+
+        veteranDetailsForm.addEventListener('submit', async function (event)
+        {
+            event.preventDefault();
+            await handleSubmitVeteranDetails();
+        });
+
+        async function handleSubmitVeteranDetails()
+        {
+            let isValid = true;
+            const details = {
+                full_name: detailFullNameInput.value.trim(),
+                id_card_number: detailIdCardNumberInput.value.trim(),
+                full_address: detailFullAddressInput.value.trim(),
+                phone_number: detailPhoneNumberInput.value.trim(),
+                next_of_kin_full_name: detailNextOfKinFullNameInput.value.trim(),
+                next_of_kin_full_phone_number: detailNextOfKinFullPhoneNumberInput.value.trim(),
+                next_of_kin_relationship: detailNextOfKinRelationshipInput.value.trim(),
+            };
+
+            for (const key in details)
+            {
+                const inputElement = document.getElementById(`detail-${key}`);
+                if (!details[key])
+                {
+                    isValid = false;
+                    if (inputElement) inputElement.classList.add('input-error');
+                } else
+                {
+                    if (inputElement) inputElement.classList.remove('input-error');
+                }
+            }
+
+            if (!isValid)
+            {
+                showMessage("Validation Error", "Please fill in all required fields in your profile.");
+                return;
+            }
+
+            tempVeteranDetails = details;
+            hideVeteranDetailsModal();
+            // emailForOtpProcess should be set from the initial email input and confirmed
+            await proceedWithFinalRegistrationAndOtp();
+        }
+
+        async function proceedWithFinalRegistrationAndOtp()
+        {
+            const authTarget = getAuthTarget(); // Get current auth target (veteran or manager)
+
+            if (!emailForOtpProcess)
+            {
+                showMessage("Error", "Email missing for registration. Please restart the process.");
+                cancelOtpFlow(); // Resets state
+                hideLoading();
+                return;
+            }
+
+            // If it's a veteran registration, details from the form are required.
+            // Managers skip the details form, so tempVeteranDetails will (and should) be empty for them.
+            if (authTarget.collection === VETERANS_COLLECTION && Object.keys(tempVeteranDetails).length === 0)
+            {
+                showMessage("Error", "Veteran profile details are missing. Please complete the profile form.");
+                // Optionally, guide the user to restart or re-show the details modal.
+                // showVeteranDetailsModal(); // This might be too direct; user might need to restart.
+                hideLoading();
+                return;
+            }
+
+            showLoading();
+
+            try
+            {
+                const randomPassword = generateRandomPassword();
+                console.log(`Attempting to create FINAL user in '${authTarget.collection}': ${emailForOtpProcess}`);
+                const userData = {
+                    email: emailForOtpProcess,
+                    password: randomPassword,
+                    passwordConfirm: randomPassword,
+                    emailVisibility: true,
+                    verified: false // Will be set to true after successful OTP verification
+                };
+
+                if (authTarget.collection === VETERANS_COLLECTION)
+                {
+                    userData.status = 'Application'; // Veterans start with 'Application' status
+                    // tempVeteranDetails should be populated from handleSubmitVeteranDetails
+                    Object.assign(userData, tempVeteranDetails);
+                } else if (authTarget.collection === MANAGERS_COLLECTION)
+                {
+                    // Add any default fields specific to managers if needed
+                    // e.g., userData.manager_level = 'standard';
+                    // Ensure these fields exist in your PocketBase 'managers' collection schema.
+                }
+
+                const newUser = await pb.collection(authTarget.collection).create(userData);
+                console.log("FINAL User created:", newUser);
+
+                // User account is created. Now send OTP for them to verify and log in.
+                const result = await pb.collection(authTarget.collection).requestOTP(emailForOtpProcess);
+                if (result && result.otpId)
+                {
+                    otpRequestContext = {
+                        email: emailForOtpProcess,
+                        collection: authTarget.collection,
+                        otpId: result.otpId,
+                        role: authTarget.role // This 'role' is for client-side logic (e.g. redirection)
+                    };
+                    showOtpModal(emailForOtpProcess, true); // true: for new registration message
+                } else
+                {
+                    console.error("OTP request after FINAL registration did not return an otpId:", result);
+                    // User is created, but OTP send failed. They can try to log in again, which would trigger OTP.
+                    showMessage("Account Created", "Your account has been created, but sending the verification code failed. Please try logging in again, or contact support if the issue persists.");
+                }
+            } catch (error)
+            {
+                console.error("Error during FINAL registration:", error);
+                showMessage("Registration Error", `Failed to register account. ${getPocketBaseErrorDetails(error)}`);
+            } finally
+            {
+                hideLoading();
+                tempVeteranDetails = {}; // Clear stored veteran details after the attempt
+            }
+        }
+
+        async function handleVerifyOtp()
+        {
+            const code = otpCodeInput.value.trim();
+            if (!otpRequestContext.otpId || !otpRequestContext.email || !otpRequestContext.collection)
+            {
+                showMessage("Error", "OTP session invalid or expired. Please try the login process again.");
+                cancelOtpFlow(); return;
+            }
+            if (!code || !/^\d{6}$/.test(code))
+            {
+                showMessage("Input Error", "Please enter a valid 6-digit OTP."); return;
+            }
+
+            showLoading();
+            const { collection: targetCollection, otpId: currentOtpId, role: originalRole, email: currentEmail } = otpRequestContext;
+
+            try
+            {
+                // Authenticate with OTP
+                const authData = await pb.collection(targetCollection).authWithOTP(currentOtpId, code, {
+                    // If your collection requires other fields to be part of the auth record
+                    // during authWithOTP, you might need to expand the body here.
+                    // Usually, otpId and code are enough.
+                });
+                console.log(`Logged in successfully via OTP to ${targetCollection}:`, authData);
+
+                // Mark user as verified if they aren't already
+                if (authData.record && !authData.record.verified)
+                {
+                    try
+                    {
+                        await pb.collection(targetCollection).update(authData.record.id, { verified: true });
+                        console.log("User marked as verified.");
+                        if (pb.authStore.model) pb.authStore.model.verified = true; // Update local authStore
+                    } catch (verificationError)
+                    {
+                        console.warn("Could not mark user as verified:", verificationError);
+                        // Continue login even if verification update fails, but log it.
+                    }
+                }
+                hideOtpModal();
+                redirectToDashboard(originalRole, targetCollection); // Use role from original context for redirection
+                cancelOtpFlow(); // Clear OTP context and other states
+            } catch (error)
+            {
+                console.error("Error verifying OTP:", error);
+                showMessage("Login Failed", `Invalid OTP or login error. ${getPocketBaseErrorDetails(error)}`);
+                otpCodeInput.value = ''; // Clear OTP input for retry
+            } finally
+            {
+                hideLoading();
+            }
+        }
+
+        function redirectToDashboard(role, collectionName)
+        {
+            if (!role)
+            {
+                console.error("User role undefined during redirect.");
+                showMessage("Login Error", "User role not found. Cannot redirect.");
+                if (pb) pb.authStore.clear();
+                return;
+            }
+            console.log(`Redirecting: role=${role}, collection=${collectionName}`);
+
+            // More specific checks first
+            if (collectionName === MANAGERS_COLLECTION && role === 'admin')
+            {
+                window.location.href = 'admin.html';
+            } else if (collectionName === VETERANS_COLLECTION && role === 'veteran')
+            {
+                window.location.href = 'profile.html';
+            }
+            // Fallbacks based on role only (less ideal but can work if collectionName is ambiguous)
+            else if (role === 'admin')
+            {
+                console.warn("Redirecting to admin.html based on role only, collection was:", collectionName);
+                window.location.href = 'admin.html';
+            } else if (role === 'veteran')
+            {
+                console.warn("Redirecting to profile.html based on role only, collection was:", collectionName);
+                window.location.href = 'profile.html';
+            }
+            else
+            {
+                console.error("Unknown role/collection combination for redirect:", role, collectionName);
+                showMessage("Login Error", "User role not recognized for redirection.");
+                if (pb) pb.authStore.clear();
+            }
+        }
+
+        // --- Event Listeners ---
+        sendOtpRegisterBtn.addEventListener('click', handleSendOtpOrRegister);
+        verifyOtpBtn.addEventListener('click', handleVerifyOtp);
+
+        confirmRegisterBtn.addEventListener('click', () =>
+        {
+            hideRegisterConfirmModal();
+            const authTarget = getAuthTarget(); // Get target *at the moment of confirmation*
+
+            // emailForOtpProcess is already set by showRegisterConfirmModal -> handleSendOtpOrRegister
+            if (!emailForOtpProcess)
+            {
+                showMessage("Error", "Email was lost. Please restart the registration.");
+                cancelOtpFlow();
+                return;
+            }
+
+            if (authTarget.isManager)
+            {
+                tempVeteranDetails = {}; // Ensure no veteran details are carried over for manager
+                proceedWithFinalRegistrationAndOtp(); // Managers skip the details form
+            } else
+            {
+                showVeteranDetailsModal();  // Veterans proceed to details form
+            }
+        });
+
+        googleLoginBtn.addEventListener('click', () =>
+        {
+            showMessage("Google Sign-In", "Google Sign-In is a mock feature for now and not implemented.");
+        });
+
+        document.addEventListener('DOMContentLoaded', () =>
+        {
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+            initPocketBase();
+        });
+    </script>
+</body>
+</html>

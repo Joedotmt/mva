@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - MVA (BeerCSS)</title>
+    <link rel="icon" href="https://raw.githubusercontent.com/Joedotmt/mva/f57acb904a89a49a0afde957145b86855be5a706/branding/Logo%20No%20Text%20latest.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Secular+One&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/pocketbase/dist/pocketbase.umd.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/beercss@3.11.11/dist/cdn/beer.min.css" rel="stylesheet" />
+    <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.11.11/dist/cdn/beer.min.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
+    <link href="styles.css" rel="stylesheet" />
+</head>
+<body class="light">
+    <dialog id="loading-indicator" class="hidden">
+        <progress class="circle large"></progress>
+    </dialog>
+
+    <dialog class="modal" id="message-dialog">
+        <h5 id="message-dialog-title">Message</h5>
+        <p id="message-dialog-text" class="large-text"></p>
+        <nav class="right-align">
+            <button class="primary" id="message-dialog-ok-btn" onclick="ui('#message-dialog')">OK</button>
+        </nav>
+    </dialog>
+
+    <dialog class="modal" id="confirm-action-dialog">
+        <h5 id="confirm-action-title">Confirm Action</h5>
+        <h6 id="confirm-action-text"></h6>
+        <nav class="right-align">
+            <button class="border" id="confirm-action-cancel-btn" onclick="ui('#confirm-action-dialog').close()">Cancel</button>
+            <button class="primary" id="confirm-action-confirm-btn">Confirm</button>
+        </nav>
+    </dialog>
+
+    <header class="fixed">
+        <nav style="gap: 0;">
+            <img src="https://raw.githubusercontent.com/Joedotmt/mva/f57acb904a89a49a0afde957145b86855be5a706/branding/Logo%20No%20Text%20latest.svg" alt="MVA Logo" style="height: 3rem; margin-right: 0.5rem;">
+            <h5 class="max">MVA Admin Panel</h5>
+            <div style="margin: auto;"></div>
+            <span id="admin-email" class="label small-text margin right-margin"></span>
+            <button class="ripple" id="logout-btn">
+                <span>Logout</span>
+                <i>logout</i>
+            </button>
+            <a target="_blank" href="_">
+                <button style="margin-left: 1rem; background: url(pb_logo.webp); background-size:60%; background-repeat: no-repeat; background-position: center; background-color: white; height: 40px; width: 40px; padding: 0; border-radius: 5px; border: 2px solid black;"></button>
+            </a>
+        </nav>
+    </header>
+
+    <main>
+        <div id="admin-content-main">
+            <div id="admin-content" class="hidden">
+                <div class="row">
+                    <div class="col s12">
+                        <h5 class="large-text">Veteran Management</h5>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: flex-end; gap: 0.9em 12.6px;">
+                    <div class="field">
+                        <label for="status-filter-btn" class="active">Filter by Type</label>
+                        <button id="status-filter-btn" data-ui="#status-filter-menu" class="border ripple" style="min-width: 180px; justify-content: space-between;">
+                            <span id="status-filter-btn-text">All</span>
+                            <i>arrow_drop_down</i>
+                        </button>
+                        <menu id="status-filter-menu" class="left">
+                            <li data-value="">All</li>
+                            <li data-value="Application">Application</li>
+                            <li data-value="Member">Member</li>
+                            <li data-value="Archive">Archive</li>
+                        </menu>
+                    </div>
+                    <div class="field label border">
+                        <input type="text" id="search-input" placeholder=" ">
+                        <label>Search Name/ID</label>
+                    </div>
+                    <button id="reset-filters-btn" style="margin: 0;" class="ripple border large">
+                        <span>Reset</span>
+                        <i>refresh</i>
+                    </button>
+                </div>
+
+                <div class="table-container surface-container" style="margin: 1em 0; outline: 2px solid var(--on-primary-container); overflow: hidden; border-radius: 10px;">
+                    <table class="stripes">
+                        <thead>
+                            <tr>
+                                <th>Full Name</th>
+                                <th>ID Card No.</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th>Amount Owed</th>
+                                <th>Next Due Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="veterans-table-body">
+                            <tr>
+                                <td colspan="7" class="center-align large-padding">Loading veterans...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="small-text chip fill right-align ripple" style="margin: 0;">Total veterans displayed: <span id="total-veterans-displayed">0</span></p>
+            </div>
+        </div>
+
+        <dialog class="modal right large" id="member-details-drawer" style="font-size: 0.5em;">
+            <header style="font-size: 0.1em;">
+                <nav>
+                    <button class="ripple transparent circle close-details-btn">
+                        <i>close</i>
+                    </button>
+                    <h5 class="max" id="member-details-drawer-title">Veteran Details</h5>
+                </nav>
+            </header>
+            <div class="drawer-body">
+                <div id="details-panel-placeholder" class="center-align large-padding">
+                    <i>info</i>
+                    <p class="medium-text">Select a veteran from the list to view their details.</p>
+                </div>
+                <div id="details-panel-content" class="hidden">
+                    <div id="view-mode-content">
+                        <section class="large-margin">
+                            <h6>Personal Information</h6>
+                            <div style="display: flex; flex-direction: column; gap:5px">
+                                <div class="fill" style="height: auto;padding: 1em; border-bottom-left-radius: 7px; border-bottom-right-radius: 7px;">
+                                    <label class="active" style="font-size: 1.5em;">Full Name</label>
+                                    <div id="view-full_name" class="large-text"></div>
+                                </div>
+                                <div class="fill" style="height: auto;padding: 1em; border-radius: 7px;">
+                                    <label class="active" style="font-size: 1.5em;">ID Card Number</label>
+                                    <div id="view-id_card_number" class="large-text"></div>
+                                </div>
+                                <div class="fill" style="height: auto;padding: 1em;border-radius: 7px;">
+                                    <label class="active" style="font-size: 1.5em;">Full Address</label>
+                                    <div id="view-full_address" class="large-text"></div>
+                                </div>
+                                <div class="fill" style="height: auto;padding: 1em;border-radius: 7px;">
+                                    <label class="active" style="font-size: 1.5em;">Phone Number</label>
+                                    <div id="view-phone_number" class="large-text"></div>
+                                </div>
+                                <div class="fill" style="height: auto; padding: 1em; border-top-left-radius: 7px; border-top-right-radius: 7px;">
+                                    <label class="active" style="font-size: 1.5em;">Email</label>
+                                    <div id="view-email" class="large-text"></div>
+                                </div>
+                            </div>
+                        </section>
+                        <div class="divider"></div>
+                        <section class="large-margin">
+                            <h6 style="margin-bottom: 0.2rem;">Next of Kin</h6>
+                            <div style="display: flex; gap: 5px;">
+                                <div class="fill" style="height: auto; width: 100%; padding: 1em; border-bottom-right-radius: 7px; border-top-right-radius: 7px;">
+                                    <label class="active">Name</label>
+                                    <div id="view-next_of_kin_full_name" class="large-text"></div>
+                                </div>
+                                <div class="fill" style="height: auto; width: 100%; padding: 1em; border-radius: 7px;">
+                                    <label class="active">Phone Number</label>
+                                    <div id="view-next_of_kin_full_phone_number" class="large-text"></div>
+                                </div>
+                                <div class="fill" style="height: auto; width: 100%; padding: 1em; border-bottom-left-radius: 7px; border-top-left-radius: 7px;">
+                                    <label class="active">Relationship</label>
+                                    <div id="view-next_of_kin_relationship" class="large-text"></div>
+                                </div>
+                            </div>
+                        </section>
+                        <div class="divider"></div>
+                        <section class="large-margin">
+                            <h6>Membership Status & Dates</h6>
+                            <div style="display: flex; flex-direction: column; gap:5px">
+                                <div class="fill" style="height: auto; padding: 1em; border-radius: 7px; display: flex; align-items: center;">
+                                    <label class="active" style="font-size: 2.5em;">Current Status:</label>
+                                    <div id="view-status" class="chip large ripple" style="font-size: 1rem; pointer-events: none;"></div>
+                                </div>
+                                <div class="fill" style="height: auto;padding: 1em; border-radius: 7px;">
+                                    <label class="active" style="font-size: 1.5em;">Application Date (Created)</label>
+                                    <div id="view-applicationDate" class="large-text"></div>
+                                </div>
+                                <div class="fill" style="height: auto;padding: 1em; border-radius: 7px;">
+                                    <label class="active" style="font-size: 1.5em;">Registration Date</label>
+                                    <div id="view-registrationDate" class="large-text"></div>
+                                </div>
+                                <div class="fill" style="height: auto;padding: 1em; border-radius: 7px;">
+                                    <label class="active" style="font-size: 1.5em;">Last Payment Date</label>
+                                    <div id="view-lastPaymentDate" class="large-text"></div>
+                                </div>
+                                <div class="fill" style="height: auto;padding: 1em; border-radius: 7px;">
+                                    <label class="active" style="font-size: 1.5em;">Amount Owed</label>
+                                    <div id="view-amountOwed" class="large-text"></div>
+                                </div>
+                                <div class="fill" style="height: auto;padding: 1em; border-radius: 7px;">
+                                    <label class="active" style="font-size: 1.5em;">Next Due Date</label>
+                                    <div id="view-nextDueDate" class="large-text"></div>
+                                </div>
+                            </div>
+                        </section>
+                        <div class="divider"></div>
+                        <section class="large-margin">
+                            <h6>Admin Notes</h6>
+                            <div class="fill" style="padding: 0.5em 1em;">
+                                <p id="view-admin_note" class="large-text" style="white-space: pre-wrap;"></p>
+                            </div>
+                        </section>
+                    </div>
+
+                    <div id="edit-mode-content" class="hidden">
+                        <h6>Personal Information</h6>
+                        <div class="flex large-gap" style="flex-direction: column;">
+                            <div class="field label border">
+                                <input type="text" id="detail-full_name">
+                                <label>Full Name</label>
+                            </div>
+                            <div class="field label border">
+                                <input type="text" id="detail-id_card_number">
+                                <label>ID Card Number</label>
+                            </div>
+                            <div class="field label border">
+                                <input id="detail-full_address" rows="2">
+                                <label>Full Address</label>
+                            </div>
+                            <div class="field label border">
+                                <input type="tel" id="detail-phone_number">
+                                <label>Phone Number</label>
+                            </div>
+                            <div class="field label border">
+                                <input type="email" autocomplete="off" id="detail-email">
+                                <label>Email</label>
+                            </div>
+                        </div>
+                        <div class="divider large-margin"></div>
+                        <h6>Next of Kin</h6>
+                        <div class="flex large-gap" style="flex-direction: column;">
+                            <div class="field label border">
+                                <input type="text" id="detail-next_of_kin_full_name">
+                                <label>Name</label>
+                            </div>
+                            <div class="field label border">
+                                <input type="tel" id="detail-next_of_kin_full_phone_number">
+                                <label>Phone Number</label>
+                            </div>
+                            <div class="field label border">
+                                <input type="text" id="detail-next_of_kin_relationship">
+                                <label>Relationship</label>
+                            </div>
+                        </div>
+                        <div class="divider large-margin"></div>
+                        <h6>Membership Status & Dates</h6>
+                        <div class="flex large-gap" style="flex-direction: column; gap: 2em !important; display: flex;">
+                            <div class="field label border">
+                                <div class="fill" style="height: auto; padding: 1em; border-radius: 7px; display: flex; align-items: center;">
+                                    <label class="active" style="font-size: 2.5em;">Current Status:</label>
+                                    <button id="detail-status-edit-btn" data-ui="#detail-status-edit-menu" class="border ripple" style="width: auto; justify-content: space-between;">
+                                        <span id="detail-status-edit-btn-text">Select Status</span>
+                                        <i>arrow_drop_down</i>
+                                    </button>
+                                    <menu id="detail-status-edit-menu" class="left">
+                                        <li data-value="Application">Application</li>
+                                        <li data-value="Member">Member</li>
+                                        <li data-value="Archive">Archive</li>
+                                    </menu>
+                                </div>
+                            </div>
+                            <div class="field label border">
+                                <input type="text" id="detail-applicationDate" class="readonly-field" readonly>
+                                <label>Application Date (Created)</label>
+                            </div>
+                            <div class="field label border">
+                                <input type="text" id="detail-registrationDate" class="readonly-field" readonly>
+                                <label>Registration Date</label>
+                            </div>
+                            <div class="field label border">
+                                <input type="text" id="detail-lastPaymentDate" class="readonly-field" readonly>
+                                <label>Last Payment Date (Derived)</label>
+                            </div>
+                            <div class="field label border">
+                                <input type="text" id="detail-amountOwed" class="readonly-field" readonly>
+                                <label>Amount Owed</label>
+                            </div>
+                            <div class="field label border">
+                                <input type="text" id="detail-nextDueDate" class="readonly-field" readonly>
+                                <label>Next Due Date (Derived)</label>
+                            </div>
+                        </div>
+                        <div class="divider large-margin"></div>
+                        <h6>Other</h6>
+                        <div style="display: flex; flex-direction: column; gap: 1em !important;">
+                            <div class="field textarea label border">
+                                <textarea id="detail-admin_note-edit"></textarea>
+                                <label>Admin Notes</label>
+                            </div>
+                            <button id="delete-veteran-btn" class="ripple" style="width: fit-content; background-color: var(--error); color: var(--on-error);">
+                                <i>delete_forever</i>Delete Veteran Forever
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="drawer-footer hidden" id="details-panel-footer-actions">
+                <nav class="right-align">
+                    <button id="member-details-edit-btn" class="ripple border responsive round">
+                        <span>Edit</span>
+                        <i>edit</i>
+                    </button>
+                    <button id="member-details-save-btn" class="ripple primary responsive round hidden">
+                        <span>Save Changes</span>
+                        <i>save</i>
+                    </button>
+                    <button id="member-details-cancel-edit-btn" class="ripple border responsive round hidden">
+                        <span>Cancel</span>
+                        <i>cancel</i>
+                    </button>
+                </nav>
+            </div>
+        </dialog>
+    </main>
+
+    <footer class="app-footer">
+        <span>&copy; 2025 Malta Veterans Association - Admin Portal</span>
+    </footer>
+
+    <script src="admin_app.js"></script>
+</body>
+</html>

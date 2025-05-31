@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Member Profile - MVA</title>
+    <link rel="icon" href="https://raw.githubusercontent.com/Joedotmt/mva/f57acb904a89a49a0afde957145b86855be5a706/branding/Logo%20No%20Text%20latest.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Secular+One&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/pocketbase/dist/pocketbase.umd.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/beercss@3.11.11/dist/cdn/beer.min.css" rel="stylesheet" />
+    <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.11.11/dist/cdn/beer.min.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
+    <style>
+        body.light {
+            --primary: #0061a4;
+            --on-primary: #ffffff;
+            --primary-container: #d1e4ff;
+            --on-primary-container: #001d36;
+            --secondary: #535f70;
+            --on-secondary: #ffffff;
+            --secondary-container: #d7e3f7;
+            --on-secondary-container: #101c2b;
+            --tertiary: #6b5778;
+            --on-tertiary: #ffffff;
+            --tertiary-container: #f2daff;
+            --on-tertiary-container: #251431;
+            --error: #ba1a1a;
+            --on-error: #ffffff;
+            --error-container: #ffdad6;
+            --on-error-container: #410002;
+            --background: #fdfcff;
+            --on-background: #1a1c1e;
+            --surface: #faf9fc;
+            --on-surface: #1a1c1e;
+            --surface-variant: #dfe2eb;
+            --on-surface-variant: #43474e;
+            --outline: #73777f;
+            --outline-variant: #c3c7cf;
+            --shadow: #000000;
+            --scrim: #000000;
+            --inverse-surface: #2f3033;
+            --inverse-on-surface: #f1f0f4;
+            --inverse-primary: #9ecaff;
+            --surface-dim: #dadadd;
+            --surface-bright: #faf9fc;
+            --surface-container-lowest: #ffffff;
+            --surface-container-low: #f4f3f7;
+            --surface-container: #eeedf1;
+            --surface-container-high: #e8e8eb;
+            --surface-container-highest: #e2e2e6;
+            --status-application-bg: #ffe0b2;
+            --status-application-text: #8d6e63;
+            --status-member-bg: #c8e6c9;
+            --status-member-text: #2e7d32;
+            --status-archive-bg: #e0e0e0;
+            --status-archive-text: #616161;
+            --overdue-text-color: var(--error);
+        }
+
+        body.dark {
+            --primary: #9ecaff;
+            --on-primary: #003258;
+            --primary-container: #00497d;
+            --on-primary-container: #d1e4ff;
+            --secondary: #bbc7db;
+            --on-secondary: #253140;
+            --secondary-container: #3b4858;
+            --on-secondary-container: #d7e3f7;
+            --tertiary: #d6bee4;
+            --on-tertiary: #3b2948;
+            --tertiary-container: #523f5f;
+            --on-tertiary-container: #f2daff;
+            --error: #ffb4ab;
+            --on-error: #690005;
+            --error-container: #93000a;
+            --on-error-container: #ffb4ab;
+            --background: #1a1c1e;
+            --on-background: #e2e2e6;
+            --surface: #121316;
+            --on-surface: #e2e2e6;
+            --surface-variant: #43474e;
+            --on-surface-variant: #c3c7cf;
+            --outline: #8d9199;
+            --outline-variant: #43474e;
+            --shadow: #000000;
+            --scrim: #000000;
+            --inverse-surface: #e2e2e6;
+            --inverse-on-surface: #2f3033;
+            --inverse-primary: #0061a4;
+            --surface-dim: #121316;
+            --surface-bright: #38393c;
+            --surface-container-lowest: #0d0e11;
+            --surface-container-low: #1a1c1e;
+            --surface-container: #1e2022;
+            --surface-container-high: #282a2d;
+            --surface-container-highest: #333538;
+            --status-application-bg: #5a3e2b;
+            --status-application-text: #ffcc80;
+            --status-member-bg: #1b5e20;
+            --status-member-text: #a5d6a7;
+            --status-archive-bg: #424242;
+            --status-archive-text: #bdbdbd;
+            --overdue-text-color: var(--error);
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            font-family: 'Secular One', sans-serif;
+        }
+
+        main {
+            flex-grow: 1;
+            padding: 1rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .app-footer {
+            padding: 1rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--on-surface-variant);
+            background-color: var(--surface-container-low);
+            border-top: 1px solid var(--outline-variant);
+            margin-top: auto;
+        }
+
+        .profile-card {
+            background-color: var(--surface-container);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .profile-card h5,
+        .profile-card h6 {
+            color: var(--on-surface-variant);
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-card p {
+            color: var(--on-surface);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .profile-card .label {
+            color: var(--primary);
+            font-weight: 500;
+            display: block;
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-transform: capitalize;
+            display: inline-block;
+        }
+
+        .status-application {
+            background-color: var(--status-application-bg);
+            color: var(--status-application-text);
+        }
+
+        .status-member {
+            background-color: var(--status-member-bg);
+            color: var(--status-member-text);
+        }
+
+        .status-archive {
+            background-color: var(--status-archive-bg);
+            color: var(--status-archive-text);
+        }
+
+        .overdue-indicator {
+            color: var(--overdue-text-color);
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-left: 0.5em;
+        }
+
+        .transaction-history table {
+            width: 100%;
+        }
+
+        .transaction-history th,
+        .transaction-history td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--outline-variant);
+        }
+
+        .transaction-history th {
+            background-color: var(--surface-container-high);
+        }
+
+        #loading-indicator {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .info-item {
+            background-color: var(--surface-container-low);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .info-item .label {
+            font-size: 0.85rem;
+            color: var(--on-surface-variant);
+            margin-bottom: 0.3rem;
+        }
+
+        .info-item .value {
+            font-size: 1rem;
+            color: var(--on-surface);
+            font-weight: 500;
+        }
+
+        .page-title {
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="light">
+    <dialog id="loading-indicator" class="hidden">
+        <progress class="circle large"></progress>
+    </dialog>
+
+    <dialog class="modal" id="message-dialog">
+        <h5 id="message-dialog-title">Message</h5>
+        <p id="message-dialog-text" class="large-text"></p>
+        <nav class="right-align">
+            <button class="primary" id="message-dialog-ok-btn" onclick="ui('#message-dialog')">OK</button>
+        </nav>
+    </dialog>
+
+    <header class="fixed">
+        <nav>
+            <img src="https://raw.githubusercontent.com/Joedotmt/mva/f57acb904a89a49a0afde957145b86855be5a706/branding/Logo%20No%20Text%20latest.svg" alt="MVA Logo" style="height: 3rem; margin-right: 0.5rem;">
+            <h5 class="max">MVA Member Profile</h5>
+            <button class="transparent circle" id="theme-switcher"><i>light_mode</i></button>
+            <button id="logout-btn">
+                <span>Logout</span>
+                <i>logout</i>
+            </button>
+        </nav>
+    </header>
+
+    <main id="profile-content" class="hidden">
+        <h4 class="page-title">Welcome, <span id="veteran-name-title">Veteran</span>!</h4>
+        <div id="application-status-message" class="profile-card hidden" style="background-color: var(--surface-container-low); color: var(--on-surface-variant);"></div>
+
+        <div class="profile-card">
+            <h5>Membership Overview</h5>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="label">Current Status</span>
+                    <p><span id="profile-status" class="status-badge">Loading...</span></p>
+                </div>
+                <div class="info-item" id="amount-owed-section">
+                    <span class="label">Amount Owed</span>
+                    <p id="profile-amount-owed">Loading...</p>
+                </div>
+                <div class="info-item" id="next-due-date-section">
+                    <span class="label">Next Payment Due</span>
+                    <p id="profile-next-due-date">Loading...</p>
+                </div>
+                <div class="info-item">
+                    <span class="label">Application Date</span>
+                    <p id="profile-application-date">Loading...</p>
+                </div>
+                <div class="info-item">
+                    <span class="label">Registered Since</span>
+                    <p id="profile-registration-date">Loading...</p>
+                </div>
+                <div class="info-item">
+                    <span class="label">Last Payment Date</span>
+                    <p id="profile-last-payment-date">Loading...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-card">
+            <h5>Personal Information</h5>
+            <div class="info-grid">
+                <div class="info-item"><span class="label">Full Name</span>
+                    <p id="profile-full_name">Loading...</p>
+                </div>
+                <div class="info-item"><span class="label">ID Card Number</span>
+                    <p id="profile-id_card_number">Loading...</p>
+                </div>
+                <div class="info-item"><span class="label">Email Address</span>
+                    <p id="profile-email">Loading...</p>
+                </div>
+                <div class="info-item"><span class="label">Phone Number</span>
+                    <p id="profile-phone_number">Loading...</p>
+                </div>
+                <div class="info-item" style="grid-column: span 2;"><span class="label">Full Address</span>
+                    <p id="profile-full_address">Loading...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-card">
+            <h5>Next of Kin Details</h5>
+            <div class="info-grid">
+                <div class="info-item"><span class="label">Full Name</span>
+                    <p id="profile-next_of_kin_full_name">Loading...</p>
+                </div>
+                <div class="info-item"><span class="label">Phone Number</span>
+                    <p id="profile-next_of_kin_full_phone_number">Loading...</p>
+                </div>
+                <div class="info-item"><span class="label">Relationship</span>
+                    <p id="profile-next_of_kin_relationship">Loading...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-card transaction-history">
+            <h5>Transaction History</h5>
+            <div class="responsive-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Amount Paid</th>
+                            <th>Transaction ID (System)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transaction-history-body">
+                        <tr>
+                            <td colspan="3" class="center-align">Loading transaction history...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="profile-card">
+            <h5>Admin Notes</h5>
+            <div class="info-item" style="background-color: var(--surface-container-lowest);">
+                <p id="profile-admin-note" style="white-space: pre-wrap;">Loading...</p>
+            </div>
+        </div>
+
+
+    </main>
+
+    <footer class="app-footer">
+        <span>&copy; <span id="current-year"></span> Malta Veterans Association - Member Portal</span>
+    </footer>
+
+    <script>
+        // --- Configuration ---
+        const POCKETBASE_URL = 'http://127.0.0.1:8090'; // IMPORTANT: REPLACE
+        const VETERANS_COLLECTION = 'veterans';
+        const TRANSACTIONS_COLLECTION = 'transactions';
+        const MEMBERSHIP_FEE = 10; // EUR
+
+        // --- UI Elements ---
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const messageDialogEl = document.getElementById('message-dialog');
+        const messageDialogTitle = document.getElementById('message-dialog-title');
+        const messageDialogText = document.getElementById('message-dialog-text');
+
+        const profileContent = document.getElementById('profile-content');
+        const veteranNameTitle = document.getElementById('veteran-name-title');
+        const profileStatus = document.getElementById('profile-status');
+        const profileAmountOwed = document.getElementById('profile-amount-owed');
+        const profileNextDueDate = document.getElementById('profile-next-due-date');
+        const profileApplicationDate = document.getElementById('profile-application-date');
+        const profileRegistrationDate = document.getElementById('profile-registration-date');
+        const profileLastPaymentDate = document.getElementById('profile-last-payment-date');
+
+        const profileFullName = document.getElementById('profile-full_name');
+        const profileIdCardNumber = document.getElementById('profile-id_card_number');
+        const profileEmail = document.getElementById('profile-email');
+        const profilePhoneNumber = document.getElementById('profile-phone_number');
+        const profileFullAddress = document.getElementById('profile-full_address');
+
+        const profileNextOfKinFullName = document.getElementById('profile-next_of_kin_full_name');
+        const profileNextOfKinFullPhoneNumber = document.getElementById('profile-next_of_kin_full_phone_number');
+        const profileNextOfKinRelationship = document.getElementById('profile-next_of_kin_relationship');
+        const profileAdminNote = document.getElementById('profile-admin-note');
+
+        const transactionHistoryBody = document.getElementById('transaction-history-body');
+        const applicationStatusMessageDiv = document.getElementById('application-status-message');
+        const logoutBtn = document.getElementById('logout-btn');
+        const themeSwitcherBtn = document.getElementById('theme-switcher');
+
+
+        // --- PocketBase Client & State ---
+        let pb = null;
+        let loggedInVeteran = null;
+
+        // --- Utility Functions ---
+        function showLoading() { loadingIndicator.classList.remove('hidden'); loadingIndicator.classList.add('flex'); }
+        function hideLoading() { loadingIndicator.classList.add('hidden'); loadingIndicator.classList.remove('flex'); }
+
+        function showMessage(title, text)
+        {
+            messageDialogTitle.textContent = title;
+            messageDialogText.textContent = text;
+            ui('#message-dialog');
+        }
+
+        function formatDate(dateString)
+        {
+            if (!dateString) return 'N/A';
+            try
+            {
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) return 'Invalid Date';
+                return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            } catch (e) { return 'Invalid Date Format'; }
+        }
+
+        function formatCurrency(amount)
+        {
+            return `€${Number(amount).toFixed(2)}`;
+        }
+
+        function getStatusBadgeClass(status)
+        {
+            switch (status)
+            {
+                case 'Application': return 'status-application';
+                case 'Member': return 'status-member';
+                case 'Archive': return 'status-archive';
+                default: return '';
+            }
+        }
+
+        async function getLastPaymentTransaction(veteranId)
+        {
+            if (!pb) return null;
+            try
+            {
+                const transactions = await pb.collection(TRANSACTIONS_COLLECTION).getFullList({
+                    filter: `veteran = "${veteranId}"`,
+                    sort: '-created',
+                    perPage: 1,
+                });
+                return transactions.length > 0 ? transactions[0] : null;
+            } catch (error)
+            {
+                console.error(`Error fetching last payment transaction for ${veteranId}:`, error);
+                return null;
+            }
+        }
+        async function getFirstPaymentTransaction(veteranId)
+        {
+            if (!pb) return null;
+            try
+            {
+                const transactions = await pb.collection(TRANSACTIONS_COLLECTION).getFullList({
+                    filter: `veteran = "${veteranId}"`,
+                    sort: 'created',
+                    perPage: 1,
+                });
+                return transactions.length > 0 ? transactions[0] : null;
+            } catch (error)
+            {
+                console.error(`Error fetching first payment transaction for ${veteranId}:`, error);
+                return null;
+            }
+        }
+
+
+        async function calculateAmountOwedAndOverdueStatus(veteranId, veteranStatus, veteranCreatedDate)
+        {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (veteranStatus === 'Archive')
+            {
+                return { amountOwed: 0, isOverdue: false, nextDueDate: null, lastPaymentDate: null };
+            }
+
+            const lastPaymentTransaction = await getLastPaymentTransaction(veteranId);
+            let lastPaymentDate = null;
+            if (lastPaymentTransaction)
+            {
+                lastPaymentDate = new Date(lastPaymentTransaction.created);
+            }
+
+            let nextDueDate = null;
+            let amountOwed = 0;
+            let isOverdue = false;
+
+            if (veteranStatus === 'Application')
+            {
+                amountOwed = MEMBERSHIP_FEE;
+                isOverdue = true;
+            } else if (veteranStatus === 'Member')
+            {
+                if (lastPaymentDate)
+                {
+                    nextDueDate = new Date(lastPaymentDate);
+                    nextDueDate.setFullYear(nextDueDate.getFullYear() + 1);
+                    nextDueDate.setHours(0, 0, 0, 0);
+
+                    if (today >= nextDueDate)
+                    {
+                        amountOwed = MEMBERSHIP_FEE;
+                        isOverdue = true;
+                    } else
+                    {
+                        amountOwed = 0;
+                        isOverdue = false;
+                    }
+                } else
+                {
+                    amountOwed = MEMBERSHIP_FEE;
+                    isOverdue = true;
+                    if (veteranCreatedDate)
+                    {
+                        nextDueDate = new Date(veteranCreatedDate);
+                        nextDueDate.setFullYear(nextDueDate.getFullYear() + 1);
+                        nextDueDate.setHours(0, 0, 0, 0);
+                        if (today >= nextDueDate)
+                        {
+                            isOverdue = true;
+                        } else
+                        {
+                            isOverdue = true;
+                        }
+                    }
+                }
+            }
+            return {
+                amountOwed: amountOwed,
+                isOverdue: isOverdue,
+                nextDueDate: nextDueDate ? nextDueDate.toISOString() : null,
+                lastPaymentDate: lastPaymentDate ? lastPaymentDate.toISOString() : null
+            };
+        }
+
+        // --- Main Profile Logic ---
+        async function loadProfileData()
+        {
+            if (!pb.authStore.isValid || !pb.authStore.model || pb.authStore.model.collectionName !== VETERANS_COLLECTION)
+            {
+                window.location.href = 'login.html';
+                return;
+            }
+            loggedInVeteran = pb.authStore.model;
+            showLoading();
+
+            try
+            {
+                // Fetch full veteran details (authStore model might be partial)
+                const veteranFullDetails = await pb.collection(VETERANS_COLLECTION).getOne(loggedInVeteran.id);
+                loggedInVeteran = veteranFullDetails; // Update with full details
+
+                const amountOwedSection = document.getElementById('amount-owed-section');
+                const nextDueDateSection = document.getElementById('next-due-date-section');
+
+                veteranNameTitle.textContent = loggedInVeteran.full_name || 'Veteran';
+
+                // Personal Info
+                profileFullName.textContent = loggedInVeteran.full_name || 'N/A';
+                profileIdCardNumber.textContent = loggedInVeteran.id_card_number || 'N/A';
+                profileEmail.textContent = loggedInVeteran.email || 'N/A';
+                profilePhoneNumber.textContent = loggedInVeteran.phone_number || 'N/A';
+                profileFullAddress.textContent = loggedInVeteran.full_address || 'N/A';
+
+                // Next of Kin
+                profileNextOfKinFullName.textContent = loggedInVeteran.next_of_kin_full_name || 'N/A';
+                profileNextOfKinFullPhoneNumber.textContent = loggedInVeteran.next_of_kin_full_phone_number || 'N/A';
+                profileNextOfKinRelationship.textContent = loggedInVeteran.next_of_kin_relationship || 'N/A';
+
+                // Admin Note
+                profileAdminNote.textContent = loggedInVeteran.admin_note || 'No administrative notes on file.';
+
+
+                // Membership Overview
+                profileStatus.textContent = loggedInVeteran.status || 'Unknown';
+                profileStatus.className = `status-badge ${getStatusBadgeClass(loggedInVeteran.status)}`;
+
+                profileApplicationDate.textContent = formatDate(loggedInVeteran.created);
+
+                let registrationDateDisplay = 'N/A';
+
+                if (loggedInVeteran.status === 'Application')
+                {
+                    applicationStatusMessageDiv.innerHTML = `
+                        <p style="margin-bottom: 0.5rem;">Thank you for applying to join the Malta Veterans Association.</p>
+                        <p style="margin-bottom: 0.5rem;">We’ve received your application and it’s currently under review by our team. Please allow a few days for the approval process. You’ll receive an email notification once your application has been approved.</p>
+                        <p>Once accepted, a one-time registration fee of €10 is required, followed by an annual membership fee of €10.</p>
+                    `;
+                    applicationStatusMessageDiv.classList.remove('hidden');
+                    amountOwedSection.classList.add('hidden');
+                    nextDueDateSection.classList.add('hidden');
+                    profileAmountOwed.textContent = formatCurrency(MEMBERSHIP_FEE); // Still show potential fee
+                    profileNextDueDate.textContent = 'N/A (Pending Approval)';
+                    profileLastPaymentDate.textContent = 'No payments yet'; // Applicants have no payment history
+
+                } else
+                {
+                    applicationStatusMessageDiv.classList.add('hidden');
+                    applicationStatusMessageDiv.innerHTML = ''; // Clear content
+                    amountOwedSection.classList.remove('hidden');
+                    nextDueDateSection.classList.remove('hidden');
+
+                    const paymentInfo = await calculateAmountOwedAndOverdueStatus(loggedInVeteran.id, loggedInVeteran.status, loggedInVeteran.created);
+                    profileAmountOwed.textContent = formatCurrency(paymentInfo.amountOwed);
+                    if (paymentInfo.isOverdue && paymentInfo.amountOwed > 0)
+                    {
+                        const overdueSpan = document.createElement('span');
+                        overdueSpan.className = 'overdue-indicator';
+                        overdueSpan.textContent = '(Overdue)';
+                        profileAmountOwed.appendChild(overdueSpan);
+                    }
+                    profileNextDueDate.textContent = formatDate(paymentInfo.nextDueDate);
+
+                    if (paymentInfo.lastPaymentDate)
+                    {
+                        profileLastPaymentDate.textContent = formatDate(paymentInfo.lastPaymentDate);
+                    } else
+                    {
+                        profileLastPaymentDate.textContent = 'No payments yet';
+                    }
+                }
+
+                if (loggedInVeteran.status === 'Member' || loggedInVeteran.status === 'Archive') // Also show for archive if they were a member
+                {
+                    const firstPayment = await getFirstPaymentTransaction(loggedInVeteran.id);
+                    registrationDateDisplay = formatDate(firstPayment ? firstPayment.created : loggedInVeteran.created);
+                } else
+                { // If not member, check if they ever made a payment (e.g. archived member)
+                    const firstPayment = await getFirstPaymentTransaction(loggedInVeteran.id);
+                    if (firstPayment) registrationDateDisplay = formatDate(firstPayment.created);
+                }
+                profileRegistrationDate.textContent = registrationDateDisplay;
+
+                // Transaction History
+                const transactions = await pb.collection(TRANSACTIONS_COLLECTION).getFullList({
+                    filter: `veteran = "${loggedInVeteran.id}"`,
+                    sort: '-created'
+                });
+
+                transactionHistoryBody.innerHTML = ''; // Clear loading/previous
+                if (transactions.length > 0)
+                {
+                    transactions.forEach(tx =>
+                    {
+                        const row = transactionHistoryBody.insertRow();
+                        row.insertCell().textContent = formatDate(tx.created);
+                        row.insertCell().textContent = formatCurrency(tx.amount_paid);
+                        row.insertCell().textContent = tx.id;
+                    });
+                } else
+                {
+                    transactionHistoryBody.innerHTML = '<tr><td colspan="3" class="center-align">No transactions found.</td></tr>';
+                }
+
+                profileContent.classList.remove('hidden');
+            } catch (error)
+            {
+                console.error("Error loading profile data:", error);
+                showMessage("Error", "Could not load your profile data. Please try logging in again.");
+                // pb.authStore.clear(); 
+                // window.location.href = 'login.html';
+            } finally
+            {
+                hideLoading();
+            }
+        }
+
+        async function handleLogout()
+        {
+            showLoading();
+            try
+            {
+                pb.authStore.clear();
+                window.location.href = 'login.html';
+            } catch (error)
+            {
+                console.error("Logout failed:", error);
+                showMessage("Logout Error", "An error occurred during logout.");
+            } finally
+            {
+                hideLoading();
+            }
+        }
+
+        function toggleTheme()
+        {
+            const body = document.body;
+            body.classList.toggle('dark');
+            body.classList.toggle('light');
+            themeSwitcherBtn.innerHTML = body.classList.contains('dark') ? '<i>dark_mode</i>' : '<i>light_mode</i>';
+            // Optionally, save theme preference to localStorage
+            localStorage.setItem('theme', body.classList.contains('dark') ? 'dark' : 'light');
+        }
+
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () =>
+        {
+            pb = new PocketBase(POCKETBASE_URL);
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+
+            // Apply saved theme or default to light
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark')
+            {
+                document.body.classList.remove('light');
+                document.body.classList.add('dark');
+                themeSwitcherBtn.innerHTML = '<i>dark_mode</i>';
+            } else
+            {
+                themeSwitcherBtn.innerHTML = '<i>light_mode</i>'; // Default
+            }
+
+
+            if (pb.authStore.isValid && pb.authStore.model && pb.authStore.model.collectionName === VETERANS_COLLECTION)
+            {
+                loadProfileData();
+            } else
+            {
+                // If not a valid veteran session, clear and redirect.
+                pb.authStore.clear();
+                window.location.href = 'login.html';
+            }
+
+            logoutBtn.addEventListener('click', handleLogout);
+            themeSwitcherBtn.addEventListener('click', toggleTheme);
+            ui(); // Initialize BeerCSS components like modals
+        });
+    </script>
+</body>
+</html>
