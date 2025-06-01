@@ -244,6 +244,22 @@
             margin-bottom: 1.5rem;
             text-align: center;
         }
+
+        .action-button {
+            background-color: var(--primary);
+            color: var(--on-primary);
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .action-button:hover {
+            background-color: var(--primary-container);
+        }
     </style>
 </head>
 <body class="light">
@@ -350,6 +366,7 @@
                             <th>Date</th>
                             <th>Amount Paid</th>
                             <th>Transaction ID (System)</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="transaction-history-body">
@@ -673,10 +690,24 @@
                         row.insertCell().textContent = formatDate(tx.created);
                         row.insertCell().textContent = formatCurrency(tx.amount_paid);
                         row.insertCell().textContent = tx.id;
+
+                        // Actions cell
+                        const actionsCell = row.insertCell();
+                        const viewButton = document.createElement('button');
+                        viewButton.textContent = 'View';
+                        viewButton.className = 'action-button';
+                        viewButton.onclick = () => { /* View action */ };
+                        actionsCell.appendChild(viewButton);
+
+                        const editButton = document.createElement('button');
+                        editButton.textContent = 'Edit';
+                        editButton.className = 'action-button';
+                        editButton.onclick = () => { /* Edit action */ };
+                        actionsCell.appendChild(editButton);
                     });
                 } else
                 {
-                    transactionHistoryBody.innerHTML = '<tr><td colspan="3" class="center-align">No transactions found.</td></tr>';
+                    transactionHistoryBody.innerHTML = '<tr><td colspan="4" class="center-align">No transactions found.</td></tr>';
                 }
 
                 profileContent.classList.remove('hidden');

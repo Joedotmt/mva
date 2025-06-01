@@ -615,7 +615,7 @@
             } catch (error)
             {
                 // Check if the error is due to the email already existing (validation_not_unique)
-                if (error.status === 400 && error.data?.data?.email?.code === 'validation_not_unique')
+                if (error.status == 400)
                 {
                     console.log(`User ${emailForOtpProcess} already exists in '${authTarget.collection}'. Sending OTP for login.`);
                     try

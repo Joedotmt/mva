@@ -12,7 +12,8 @@ const adminEmailSpan = document.getElementById('admin-email');
 const logoutBtn = document.getElementById('logout-btn');
 const adminContentMain = document.getElementById('admin-content-main');
 const adminContent = document.getElementById('admin-content');
-const veteransTableBody = document.getElementById('veterans-table-body');
+const veteransListContainerEl = document.getElementById('veterans-list-container');
+const veteransListInitialLoadingEl = document.getElementById('veterans-list-initial-loading');
 const statusFilterBtn = document.getElementById('status-filter-btn');
 const statusFilterBtnText = document.getElementById('status-filter-btn-text');
 const statusFilterMenu = document.getElementById('status-filter-menu');
@@ -49,6 +50,7 @@ const viewLastPaymentDate = document.getElementById('view-lastPaymentDate');
 const viewAmountOwed = document.getElementById('view-amountOwed'); // New
 const viewNextDueDate = document.getElementById('view-nextDueDate');
 const viewAdminNote = document.getElementById('view-admin_note');
+const viewTransactionsTableBody = document.getElementById('view-transactions-table-body');
 
 // Edit Mode Elements
 const detailFullName = document.getElementById('detail-full_name');
@@ -77,7 +79,7 @@ const memberDetailsCancelEditBtn = document.getElementById('member-details-cance
 let currentEditingVeteranId = null;
 let isMemberDetailsEditMode = false;
 let originalVeteranDataForEdit = null;
-let activeTableRow = null;
+let activeListItem = null;
 
 let pb = null;
 let allVeterans = [];
@@ -186,6 +188,45 @@ async function calculateAmountOwedAndOverdueStatus(veteranId, veteranStatus, vet
     };
 }
 
+async function getTransactionsForVeteran(veteranId)
+{
+    if (!pb) return [];
+    try
+    {
+        const transactions = await pb.collection('transactions').getFullList({
+            filter: `veteran = "${veteranId}"`,
+            sort: '-created', // Show newest first
+        });
+        return transactions;
+    } catch (error)
+    {
+        console.error(`Error fetching transactions for veteran ${veteranId}:`, error);
+        showMessage("Transaction Error", `Could not load transactions for veteran ${veteranId}. ${error.message}`);
+        return [];
+    }
+}
+
+async function populateTransactionsTable(veteranId)
+{
+    viewTransactionsTableBody.innerHTML = `<tr><td colspan="4" class="center-align large-padding">Loading transactions...</td></tr>`;
+    const transactions = await getTransactionsForVeteran(veteranId);
+
+    if (transactions.length === 0)
+    {
+        viewTransactionsTableBody.innerHTML = `<tr><td colspan="4" class="center-align large-padding">No transactions found for this veteran.</td></tr>`;
+        return;
+    }
+
+    viewTransactionsTableBody.innerHTML = ''; // Clear loading message
+    transactions.forEach(transaction =>
+    {
+        const row = viewTransactionsTableBody.insertRow();
+        row.insertCell().textContent = transaction.id;
+        row.insertCell().textContent = `€${Number(transaction.amount_paid).toFixed(2)}`;
+        row.insertCell().textContent = formatDate(transaction.created);
+        row.insertCell().textContent = formatDate(transaction.updated);
+    });
+}
 
 async function populateMemberDetailsForm(veteran, isEdit = false)
 {
@@ -253,6 +294,8 @@ async function populateMemberDetailsForm(veteran, isEdit = false)
 
         viewStatus.textContent = veteran.status || 'Unknown';
         viewStatus.className = `status-badge chip round large ${getStatusBadgeClass(veteran.status)}`;
+
+        await populateTransactionsTable(veteran.id);
     }
 }
 
@@ -280,12 +323,12 @@ async function setMemberDetailsMode(isEdit)
 
 async function openMemberDetailsPanel(veteranId, rowElement)
 {
-    if (activeTableRow)
+    if (activeListItem)
     {
-        activeTableRow.classList.remove('active-row');
+        activeListItem.classList.remove('active-item');
     }
-    activeTableRow = rowElement;
-    if (activeTableRow) activeTableRow.classList.add('active-row');
+    activeListItem = rowElement;
+    if (activeListItem) activeListItem.classList.add('active-item');
 
     const veteran = allVeterans.find(m => m.id === veteranId);
     if (!veteran)
@@ -309,10 +352,10 @@ async function openMemberDetailsPanel(veteranId, rowElement)
 
 function closeMemberDetailsPanelLogic()
 {
-    if (activeTableRow)
+    if (activeListItem)
     {
-        activeTableRow.classList.remove('active-row');
-        activeTableRow = null;
+        activeListItem.classList.remove('active-item');
+        activeListItem = null;
     }
     setMemberDetailsMode(false);
 
@@ -320,12 +363,15 @@ function closeMemberDetailsPanelLogic()
     detailsPanelContent.classList.add('hidden');
     detailsPanelFooterActions.classList.add('hidden');
 
+    // Clear transactions table when closing
+    viewTransactionsTableBody.innerHTML = `<tr><td colspan="4" class="center-align large-padding">Loading transactions...</td></tr>`;
+
     currentEditingVeteranId = null;
     originalVeteranDataForEdit = null;
 }
 
 const closeDetailsBtn = memberDetailsDrawer.querySelector('.close-details-btn');
-closeDetailsBtn.addEventListener('click', () => { ui("#member-details-drawer").close(); });
+closeDetailsBtn.addEventListener('click', () => { ui("#member-details-drawer"); });
 memberDetailsDrawer.addEventListener('close', closeMemberDetailsPanelLogic);
 
 
@@ -371,7 +417,7 @@ memberDetailsSaveBtn.addEventListener('click', async () =>
         originalVeteranDataForEdit = { ...allVeterans[veteranIndex] };
 
         await setMemberDetailsMode(false);
-        filterAndDisplayVeterans();
+        await filterAndDisplayVeterans(); // Ensure list is updated
 
         memberDetailsSaveBtn.innerHTML = '<span>Saved!</span><i>check</i>';
         memberDetailsSaveBtn.classList.add('success');
@@ -421,7 +467,6 @@ deleteVeteranBtn.addEventListener('click', async () =>
                 }
 
                 await pb.collection('veterans').delete(currentEditingVeteranId);
-                showMessage("Success", `${veteranName} deleted successfully.`);
                 ui("#member-details-drawer").close();
                 await fetchVeterans();
             } catch (error)
@@ -478,7 +523,13 @@ async function handleLogout()
 async function fetchVeterans()
 {
     showLoading();
-    veteransTableBody.innerHTML = `<tr><td colspan="7" class="center-align large-padding">Loading veterans...</td></tr>`;
+    if (veteransListInitialLoadingEl && veteransListContainerEl.contains(veteransListInitialLoadingEl))
+    {
+        // Keep initial loading message if it's the very first load
+    } else if (veteransListContainerEl && veteransListContainerEl.children.length === 0)
+    { // Or if list is empty, show a temp loading
+        veteransListContainerEl.innerHTML = `<div class="center-align large-padding">Loading veterans...</div>`;
+    }
     try
     {
         const records = await pb.collection('veterans').getFullList({
@@ -501,7 +552,7 @@ async function fetchVeterans()
     } catch (error)
     {
         console.error("Error fetching veterans:", error);
-        veteransTableBody.innerHTML = `<tr><td colspan="7" class="center-align large-padding red-text">Failed to load veterans. Please try again.</td></tr>`;
+        if (veteransListContainerEl) veteransListContainerEl.innerHTML = `<div class="center-align large-padding red-text">Failed to load veterans. Please try again.</div>`;
         showMessage("Fetch Error", "Could not retrieve veteran data.");
     } finally
     {
@@ -571,96 +622,168 @@ async function getFirstPaymentTransaction(veteranId)
 }
 
 
-async function renderVeteransTable(veteransToRender)
+async function renderVeteransList(veteransToRender)
 {
-    veteransTableBody.innerHTML = '';
+    if (!veteransListContainerEl) return;
+    veteransListContainerEl.innerHTML = ''; // Clear previous items
+
+    // Remove initial static loading message if it exists and is part of the container
+    const initialLoadingEl = document.getElementById('veterans-list-initial-loading');
+    if (initialLoadingEl && veteransListContainerEl.contains(initialLoadingEl))
+    {
+        initialLoadingEl.remove();
+    }
+
     if (veteransToRender.length === 0)
     {
-        veteransTableBody.innerHTML = `<tr><td colspan="7" class="center-align large-padding">No veterans match the current filters.</td></tr>`;
+        const noResultsMessage = document.createElement('div');
+        noResultsMessage.className = 'center-align large-padding';
+        noResultsMessage.textContent = 'No veterans match the current filters.';
+        veteransListContainerEl.appendChild(noResultsMessage);
         totalVeteransDisplayed.textContent = 0;
         return;
     }
 
     for (const veteran of veteransToRender)
     {
-        const row = veteransTableBody.insertRow();
-        row.dataset.veteranId = veteran.id;
-        row.classList.add('ripple');
+        const listItem = document.createElement('div');
+        listItem.className = 'veteran-list-item ripple';
+        listItem.dataset.veteranId = veteran.id;
+
         if (veteran.id === currentEditingVeteranId)
         {
-            row.classList.add('active-row');
-            activeTableRow = row;
+            listItem.classList.add('active-item');
+            activeListItem = listItem; // Update activeListItem here
         }
-        row.onclick = () => openMemberDetailsPanel(veteran.id, row);
+        listItem.onclick = () => openMemberDetailsPanel(veteran.id, listItem);
 
-        row.insertCell().textContent = veteran.full_name || 'N/A';
-        row.insertCell().textContent = veteran.id_card_number || 'N/A';
-        row.insertCell().textContent = veteran.email || 'N/A';
+        const paymentInfo = await calculateAmountOwedAndOverdueStatus(veteran.id, veteran.status, veteran.created);
 
-        const statusCell = row.insertCell();
+        const mainContent = document.createElement('div');
+        mainContent.className = 'list-item-main-content';
+
+        const leftSection = document.createElement('div');
+        leftSection.className = 'list-item-left-section';
+
+        const nameEl = document.createElement('div');
+        nameEl.className = 'veteran-name';
+        nameEl.textContent = veteran.full_name || 'N/A';
+
         const statusBadge = document.createElement('span');
         statusBadge.className = `status-badge ${getStatusBadgeClass(veteran.status)}`;
         statusBadge.textContent = veteran.status || 'Unknown';
-        statusCell.appendChild(statusBadge);
+        nameEl.appendChild(statusBadge); // Status near name
+        leftSection.appendChild(nameEl);
 
-        const paymentInfo = await calculateAmountOwedAndOverdueStatus(veteran.id, veteran.status, veteran.created);
-        const amountOwedCell = row.insertCell();
-        amountOwedCell.textContent = `€${paymentInfo.amountOwed.toFixed(2)}`;
-        if (paymentInfo.isOverdue && paymentInfo.amountOwed > 0)
-        {
-            const overdueSpan = document.createElement('span');
-            overdueSpan.className = 'overdue-indicator';
-            overdueSpan.textContent = '(Overdue)';
-            amountOwedCell.appendChild(overdueSpan);
-        }
+        const idCardEl = document.createElement('div');
+        idCardEl.className = 'veteran-id-card';
+        idCardEl.textContent = `ID: ${veteran.id_card_number || 'N/A'}`;
+        leftSection.appendChild(idCardEl);
 
-        row.insertCell().textContent = formatDate(paymentInfo.nextDueDate);
+        mainContent.appendChild(leftSection);
 
-
-        const actionsCell = row.insertCell();
-        actionsCell.onclick = (e) => e.stopPropagation();
-        const navActions = document.createElement('nav');
-        navActions.className = 'flex wrap gap-small';
+        const actionsNav = document.createElement('nav');
+        actionsNav.className = 'list-item-actions'; // Buttons will be flexed by this class's CSS
+        actionsNav.onclick = (e) => e.stopPropagation(); // Prevent item click
 
         if (veteran.status === 'Application')
         {
             const setMemberBtn = document.createElement('button');
-            setMemberBtn.innerHTML = '<i>check</i><span>Set Member</span>';
-            setMemberBtn.className = 'small round primary responsive';
-            setMemberBtn.onclick = (e) => { e.stopPropagation(); confirmUpdateVeteranStatus(veteran.id, 'Member', veteran.full_name, "set their status to Member and mark initial payment as due"); };
-            navActions.appendChild(setMemberBtn);
+            setMemberBtn.innerHTML = '<i>check</i> Accept Application';
+            setMemberBtn.className = 'responsive action-button';
+            setMemberBtn.onclick = (e) =>
+            {
+                e.stopPropagation();
+                const veteranNameDisplay = veteran.full_name || 'this veteran';
+                const title = `Accept Application?`;
+                const text = `Accept ${veteranNameDisplay}'s application and mark initial payment as due?`;
+                confirmUpdateVeteranStatus(veteran.id, 'Member', title, text);
+            };
+            actionsNav.appendChild(setMemberBtn);
 
             const archiveAppBtn = document.createElement('button');
-            archiveAppBtn.innerHTML = '<i>archive</i><span>Archive</span>';
-            archiveAppBtn.className = 'small round responsive';
-            archiveAppBtn.onclick = (e) => { e.stopPropagation(); confirmUpdateVeteranStatus(veteran.id, 'Archive', veteran.full_name, "archive this application"); };
-            navActions.appendChild(archiveAppBtn);
+            archiveAppBtn.innerHTML = '<i>archive</i> Archive';
+            archiveAppBtn.className = 'responsive action-button';
+            archiveAppBtn.onclick = (e) =>
+            {
+                e.stopPropagation();
+                const veteranNameDisplay = veteran.full_name || 'this veteran';
+                const title = `Archive?`;
+                const text = `Archive ${veteranNameDisplay}'s application?`;
+                confirmUpdateVeteranStatus(veteran.id, 'Archive', title, text);
+            };
+            actionsNav.appendChild(archiveAppBtn);
         }
 
         if (veteran.status === 'Member')
         {
             const recordPaymentBtn = document.createElement('button');
-            recordPaymentBtn.innerHTML = '<i>payment</i><span>Record Payment</span>';
-            recordPaymentBtn.className = 'small round primary responsive';
-            recordPaymentBtn.onclick = (e) => { e.stopPropagation(); confirmRecordPayment(veteran.id, veteran.full_name); };
-            navActions.appendChild(recordPaymentBtn);
+            recordPaymentBtn.innerHTML = '<i>payment</i> Record Payment';
+            recordPaymentBtn.className = 'responsive action-button';
+            if (paymentInfo.amountOwed > 0)
+            {
+                recordPaymentBtn.onclick = (e) => { e.stopPropagation(); confirmRecordPayment(veteran.id, veteran.full_name); };
+            } else
+            {
+                recordPaymentBtn.disabled = true;
+                recordPaymentBtn.dataset.tooltip = "No payment currently due.";
+            }
+            actionsNav.appendChild(recordPaymentBtn);
+
 
             const archiveMemberBtn = document.createElement('button');
-            archiveMemberBtn.innerHTML = '<i>archive</i><span>Archive</span>';
-            archiveMemberBtn.className = 'small round responsive';
-            archiveMemberBtn.onclick = (e) => { e.stopPropagation(); confirmUpdateVeteranStatus(veteran.id, 'Archive', veteran.full_name, "archive the member"); };
-            navActions.appendChild(archiveMemberBtn);
+            archiveMemberBtn.innerHTML = '<i>archive</i> Archive';
+            archiveMemberBtn.className = 'responsive action-button';
+            archiveMemberBtn.onclick = (e) =>
+            {
+                e.stopPropagation();
+                const veteranNameDisplay = veteran.full_name || 'this veteran';
+                const title = `Archive ${veteranNameDisplay}?`;
+                const text = `This should only be done if the veteran died or cancelled the membership`;
+                confirmUpdateVeteranStatus(veteran.id, 'Archive', title, text);
+            };
+            actionsNav.appendChild(archiveMemberBtn);
         }
         if (veteran.status === 'Archive')
         {
             const reopenBtn = document.createElement('button');
-            reopenBtn.innerHTML = '<i>unarchive</i><span>Re-Open</span>';
-            reopenBtn.className = 'small round responsive'; // Default style
-            reopenBtn.onclick = (e) => { e.stopPropagation(); confirmUpdateVeteranStatus(veteran.id, 'Application', veteran.full_name, "re-open this application (status will be Application)"); };
-            navActions.appendChild(reopenBtn);
+            reopenBtn.innerHTML = '<i>unarchive</i> Re-Open Application';
+            reopenBtn.className = 'responsive action-button';
+            reopenBtn.onclick = (e) =>
+            {
+                e.stopPropagation();
+                const veteranNameDisplay = veteran.full_name || 'this veteran';
+                const title = `Confirm Status Change`;
+                const text = `Are you sure you want to re-open ${veteranNameDisplay}'s application? Their status will be set to 'Application'.`;
+                confirmUpdateVeteranStatus(veteran.id, 'Application', title, text);
+            };
+            actionsNav.appendChild(reopenBtn);
         }
+        mainContent.appendChild(actionsNav);
 
-        actionsCell.appendChild(navActions);
+        const rightSection = document.createElement('div');
+        rightSection.className = 'list-item-right-section';
+
+        const amountOwedEl = document.createElement('div');
+        amountOwedEl.className = 'veteran-amount-owed';
+        amountOwedEl.textContent = `Owed: €${paymentInfo.amountOwed.toFixed(2)}`;
+        if (paymentInfo.isOverdue && paymentInfo.amountOwed > 0)
+        {
+            const overdueSpan = document.createElement('span');
+            overdueSpan.className = 'overdue-indicator';
+            overdueSpan.textContent = '(Overdue)';
+            amountOwedEl.appendChild(overdueSpan);
+        }
+        rightSection.appendChild(amountOwedEl);
+
+        const nextDueDateEl = document.createElement('div');
+        nextDueDateEl.className = 'veteran-next-due-date';
+        nextDueDateEl.textContent = `Next Due: ${formatDate(paymentInfo.nextDueDate)}`;
+        rightSection.appendChild(nextDueDateEl);
+
+        mainContent.appendChild(rightSection);
+        listItem.appendChild(mainContent);
+        veteransListContainerEl.appendChild(listItem);
     }
     totalVeteransDisplayed.textContent = veteransToRender.length;
 }
@@ -679,20 +802,20 @@ async function filterAndDisplayVeterans()
             (veteran.email && veteran.email.toLowerCase().includes(searchTerm));
         return matchesStatus && matchesSearch;
     });
-    await renderVeteransTable(displayedVeterans);
+    await renderVeteransList(displayedVeterans);
 }
 
-async function confirmUpdateVeteranStatus(veteranId, newStatus, veteranName, actionText)
+async function confirmUpdateVeteranStatus(veteranId, newStatus, title, text)
 {
     showConfirmActionModal(
-        `Confirm Status Change`,
-        `Are you sure you want to ${actionText} ${veteranName || 'this veteran'}?`,
+        title,
+        text,
         async () =>
         {
             showLoading();
             try
             {
-                await pb.collection('veterans').update(veteranId, { status: newStatus });
+                const updatedRecord = await pb.collection('veterans').update(veteranId, { status: newStatus });
                 // No automatic payment transaction on status change alone.
                 // "Record Payment" is a separate action.
                 await fetchVeterans();
@@ -705,11 +828,11 @@ async function confirmUpdateVeteranStatus(veteranId, newStatus, veteranName, act
                         await populateMemberDetailsForm(updatedVeteran, isMemberDetailsEditMode);
                     }
                 }
-                showMessage("Success", `${veteranName || 'Veteran'}'s status updated to ${newStatus}.`);
+                const displayName = updatedRecord.full_name || `Veteran ID ${updatedRecord.id}`;
             } catch (error)
             {
                 console.error("Error updating status:", error);
-                showMessage("Update Error", `Failed to update status for ${veteranName}. ${error.data?.message || error.message}`);
+                showMessage("Update Error", `Failed to update status for veteran ID ${veteranId}. ${error.data?.message || error.message}`);
             } finally
             {
                 hideLoading();

@@ -100,19 +100,45 @@ body.dark
     --overdue-text-color: var(--error);
 }
 
+html
+
+/* Ensure html element is full height and non-scrollable vertically */
+{
+    height: 100%;
+    overflow-y: hidden;
+    margin: 0;
+    /* Reset default margin */
+    padding: 0;
+    /* Reset default padding */
+    overscroll-behavior-y: contain;
+}
+
 main~footer
 {
     min-block-size: fit-content;
+}
+
+
+
+html,
+body
+{
+    position: fixed !important;
 }
 
 body
 {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    height: 100%;
+    /* Make body take full height of html element */
     background-color: var(--surface);
     color: var(--on-surface);
     font-family: 'Secular One';
+    min-width: 800px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin: 0;
 }
 
 .hidden
@@ -132,6 +158,7 @@ main
     flex-grow: 1;
     padding: 1rem;
     overflow-y: auto;
+    padding-top: 0;
     transition: margin-right 0.3s ease-in-out;
 }
 
@@ -148,16 +175,64 @@ main
     margin-right: 0.5em;
 }
 
+.personal-info-section
+{
+    background-color: var(--surface-variant);
+    border-radius: 20px;
+    height: auto;
+    padding: 1em;
+    border-radius: 7px;
+    align-items: center;
+    outline: 1px solid var(--inverse-surface);
+    width: 100%;
+}
+
+.bottom-unrounded
+{
+    border-radius: 20px !important;
+    border-bottom-left-radius: 7px !important;
+    border-bottom-right-radius: 7px !important;
+}
+
+.top-unrounded
+{
+    border-radius: 20px !important;
+    border-top-left-radius: 7px !important;
+    border-top-right-radius: 7px !important;
+}
+
+.left-unrounded
+{
+    border-radius: 20px !important;
+    border-bottom-left-radius: 7px !important;
+    border-top-left-radius: 7px !important;
+}
+
+.right-unrounded
+{
+    border-radius: 20px !important;
+    border-bottom-right-radius: 7px !important;
+    border-top-right-radius: 7px !important;
+}
+
+
+@media screen and (max-width: 720px)
+{
+    #member-details-drawer
+    {
+        margin: 0;
+        border-radius: 0;
+        height: 100vh;
+        width: 100vw;
+    }
+
+}
+
 #member-details-drawer header
 {
     background-color: var(--surface-container);
 }
 
-tbody tr:hover
-{
-    outline: 2px solid var(--primary) !important;
-    background: var(--primary-container) !important;
-}
 
 .drawer-footer
 {
@@ -182,26 +257,77 @@ header
     background-color: var(--primary-container) !important;
 }
 
-.table-container table
+#status-filter-btn
 {
+    height: 100%;
+    margin: 0;
+}
+
+.action-button
+{
+    /* height: 3.5em; */
+    /* Let size be more natural or controlled by padding */
+    /* min-height: 100%; */
+    margin: 0 !important;
+    /* Remove default margins if any from BeerCSS */
+    padding: 0.5rem !important;
+    /* Adjust padding for icon buttons */
+    border-radius: 2em;
+    /* Circular for icon buttons */
+    width: auto;
+    height: auto;
+}
+
+.list-item-main-content
+{
+    display: flex;
+    align-items: center;
+    /* Vertically aligns items in the middle */
+    justify-content: flex-start;
+    /* Aligns items to the start, then rightSection can be pushed */
+    /* Or use space-between if rightSection shouldn't be pushed by margin: */
+    /* justify-content: space-between; */
     width: 100%;
 }
 
-.table-container th,
-.table-container td
+.list-item-left-section
 {
-    padding: 0.75rem;
+    /* Adjust flex properties as needed, e.g., to control width */
+    /* flex-grow: 1; */
+    /* If you want it to take more space */
 }
 
-tbody tr
+.list-item-actions
 {
-    cursor: pointer;
+    display: flex;
+    /* To layout buttons inside it if needed */
+    gap: 4px;
+    /* Space between action buttons */
+    margin-left: 16px;
+    /* Space after the left section */
+    margin-right: 16px;
+    /* Space before the right (financial) section */
 }
 
-tbody tr.active-row
+.list-item-right-section
 {
-    background-color: var(--primary-container);
-    color: var(--on-primary-container);
+    gap: 0 !important;
+    margin-left: auto;
+    /* This will push the financial details to the far right */
+    text-align: right;
+    /* Aligns text within the financial details to the right */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    /* Aligns items like 'Owed:' and 'Next Due:' */
+    min-width: 150px;
+    /* Example: give it some minimum space */
+}
+
+.action-button::after
+{
+    height: auto;
+    width: auto;
 }
 
 .status-badge
@@ -308,10 +434,158 @@ dialog.modal.right::backdrop
     margin-bottom: 0;
 }
 
-table.stripes>tbody>tr:nth-child(odd)
+/* New List Styles */
+#veterans-list-container
 {
-    background-color: var(--surface-container-low);
+    /* Container styling if needed, e.g., for consistent surface color if not already applied */
 }
+
+.veteran-list-item
+{
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    background-color: var(--surface-container);
+    border-radius: 12px;
+    border: 1px solid var(--outline-variant);
+    cursor: pointer;
+    transition: background-color 0s ease, border-color 0s ease, box-shadow 0.2s ease;
+    /* box-shadow: var(--shadow-elevation-1); Material 3 uses subtle shadows */
+}
+
+.veteran-list-item:hover
+{
+    background-color: var(--surface-container-high);
+    border-color: var(--outline);
+    /* box-shadow: var(--shadow-elevation-2); */
+}
+
+.veteran-list-item.active-item
+{
+    background-color: var(--primary-container);
+    color: var(--on-primary-container);
+    border-color: var(--primary);
+    /* box-shadow: 0 0 0 2px var(--primary), var(--shadow-elevation-1); */
+}
+
+.veteran-list-item.active-item .veteran-id-card,
+.veteran-list-item.active-item .veteran-amount-owed,
+.veteran-list-item.active-item .veteran-next-due-date,
+.veteran-list-item.active-item .overdue-indicator
+{
+    color: var(--on-primary-container);
+}
+
+.veteran-list-item.active-item .veteran-name
+{
+    color: var(--on-primary-container);
+}
+
+.veteran-list-item.active-item .status-badge
+{
+    /* Ensure status badge is still readable on active background */
+    /* You might need to define specific --on-primary-container versions of status colors */
+}
+
+
+.list-item-main-content
+{
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    /* Align items to the top of their respective sections */
+    width: 100%;
+    gap: 1rem;
+    /* Space between left and right sections */
+}
+
+.list-item-left-section
+{
+    display: flex;
+    flex-direction: column;
+    gap: 0em;
+    /* Space between name and ID */
+    flex-grow: 1;
+    /* Allow left section to take available space */
+    min-width: 0;
+    /* Important for flex-grow to work with shrinking items */
+}
+
+.veteran-name
+{
+    font-size: 1.125rem;
+    /* M3 Title Medium */
+    font-weight: 500;
+    color: var(--on-surface);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    /* Allow status badge to wrap if name is too long */
+}
+
+.veteran-id-card
+{
+    font-size: 0.875rem;
+    /* M3 Body Medium */
+    color: var(--on-surface-variant);
+}
+
+.list-item-right-section
+{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
+    text-align: right;
+    flex-shrink: 0;
+    /* Prevent right section from shrinking too much */
+    /* min-width: 180px; /* Or let content define width */
+}
+
+.veteran-amount-owed,
+.veteran-next-due-date
+{
+    font-size: 0.875rem;
+    /* M3 Body Medium */
+    color: var(--on-surface-variant);
+}
+
+.veteran-amount-owed
+{
+    font-weight: 500;
+    margin-bottom: 0.5em;
+    /* Slightly more emphasis */
+}
+
+.list-item-actions
+{
+    margin-top: 0;
+    margin: 0;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.list-item-actions .action-button i
+{
+    margin-right: 0 !important;
+    /* Remove margin as text is hidden */
+}
+
+.list-item-actions .action-button span
+{
+    display: none;
+    /* Hide text for icon-only buttons in the list */
+}
+
+.list-item-actions .action-button.tooltipped::after
+{
+    /* BeerCSS tooltip style */
+    font-size: 0.8rem;
+}
+
 
 button:hover
 {
@@ -324,4 +598,24 @@ button:hover
     color: var(--on-surface-variant);
     cursor: not-allowed;
     opacity: 0.7;
+}
+
+/* Ensure tooltips from BeerCSS are styled appropriately for M3 */
+.tooltipped::before,
+.tooltipped::after
+{
+    /* BeerCSS tooltip bubble and arrow */
+    background: var(--inverse-surface) !important;
+    color: var(--inverse-on-surface) !important;
+    border-radius: 4px !important;
+    font-size: 0.875rem !important;
+    /* M3 Body Small/Medium */
+    padding: 4px 8px !important;
+}
+
+.tooltipped::before
+{
+    /* Arrow */
+    border-top-color: var(--inverse-surface) !important;
+    /* Match bubble background */
 }
