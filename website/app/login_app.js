@@ -528,9 +528,69 @@ confirmRegisterBtn.addEventListener('click', () =>
     }
 });
 
-googleLoginBtn.addEventListener('click', () =>
+googleLoginBtn.addEventListener('click', async () =>
 {
-    showMessage("Google Sign-In", "Google Sign-In is a mock feature for now and not implemented.");
+    showLoading();
+    const authTarget = getAuthTarget();
+
+    try
+    {
+        // This will redirect to Google and then back to this page (login.html).
+        // The PocketBase JS SDK handles the OAuth2 parameters from the URL upon return.
+        // The promise resolves with auth data AFTER the redirect and successful authentication.
+        const authData = await pb.collection(authTarget.collection).authWithOAuth2({ provider: 'google' });
+
+        console.log('Google Auth Successful. AuthData:', authData);
+
+        if (authData.meta?.isNew)
+        {
+            console.log('New user detected via Google Sign-In. Updating record...');
+            const updatePayload = { verified: true };
+
+            if (authTarget.collection === VETERANS_COLLECTION)
+            {
+                updatePayload.status = 'Application';
+                // Note: Other veteran-specific details (ID card, address, etc.)
+                // will be blank initially. The veteran will need to fill them
+                // in on their profile page (profile.html).
+            }
+            // For managers, just setting verified: true is sufficient for now.
+
+            await pb.collection(authTarget.collection).update(authData.record.id, updatePayload);
+            console.log(`New user ${authData.record.id} in ${authTarget.collection} updated:`, updatePayload);
+
+            // Update the local authStore model to reflect these changes immediately
+            if (pb.authStore.model)
+            {
+                pb.authStore.model.verified = true;
+                if (updatePayload.status)
+                {
+                    pb.authStore.model.status = updatePayload.status;
+                }
+                // If Google provides name and it's mapped, pb.authStore.model.name (or full_name)
+                // should already be populated by PocketBase.
+            }
+        }
+
+        // pb.authStore is now populated by the SDK.
+        // We can now redirect the user to their appropriate dashboard.
+        redirectToDashboard(authTarget.role, authTarget.collection);
+
+    } catch (error)
+    {
+        console.error("Google Sign-In Error:", error);
+        // Handle common cancellation scenarios
+        if (error.isAbort || (error.originalError && error.originalError.isAbort) || (error.message && error.message.toLowerCase().includes("user cancelled the oauth2 authentication")))
+        {
+            showMessage("Google Sign-In", "Google Sign-In was cancelled by the user.");
+        } else
+        {
+            showMessage("Google Sign-In Error", `Failed to sign in with Google. ${getPocketBaseErrorDetails(error)} Please ensure pop-ups are allowed and try again.`);
+        }
+    } finally
+    {
+        hideLoading();
+    }
 });
 
 document.addEventListener('DOMContentLoaded', () =>
