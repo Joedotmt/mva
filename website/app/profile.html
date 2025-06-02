@@ -311,7 +311,7 @@
     </div>
     <script>
         // --- Configuration ---
-        const POCKETBASE_URL = 'http://127.0.0.1:8090'; // IMPORTANT: REPLACE
+        const POCKETBASE_URL = 'https://veterans.fly.dev/'; // IMPORTANT: REPLACE
         const VETERANS_COLLECTION = 'veterans';
         const TRANSACTIONS_COLLECTION = 'transactions';
         const MEMBERSHIP_FEE = 10; // EUR
@@ -500,7 +500,7 @@
         {
             if (!pb.authStore.isValid || !pb.authStore.model || pb.authStore.model.collectionName !== VETERANS_COLLECTION)
             {
-                window.location.href = 'login.html';
+                window.location.href = '/';
                 return;
             }
             loggedInVeteran = pb.authStore.model;
@@ -634,7 +634,7 @@
                 console.error("Error loading profile data:", error);
                 showMessage("Error", "Could not load your profile data. Please try logging in again.");
                 // pb.authStore.clear(); 
-                // window.location.href = 'login.html';
+                // window.location.href = '/';
             } finally
             {
                 hideLoading();
@@ -647,7 +647,7 @@
             try
             {
                 pb.authStore.clear();
-                window.location.href = 'login.html';
+                window.location.href = '/';
             } catch (error)
             {
                 console.error("Logout failed:", error);
@@ -695,7 +695,7 @@
             {
                 // If not a valid veteran session, clear and redirect.
                 pb.authStore.clear();
-                window.location.href = 'login.html';
+                window.location.href = '/';
             }
 
             logoutBtn.addEventListener('click', handleLogout);

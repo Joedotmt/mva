@@ -158,6 +158,24 @@
                 <progress class="circle large"></progress>
             </div>
 
+            <!-- Google Registration Confirmation Modal -->
+            <div id="google-register-confirm-modal" class="modal-overlay hidden">
+                <div class="modal-content-custom card rounded large-padding medium-elevate">
+                    <h5 class="modal-header-custom">Confirm Account Creation</h5>
+                    <p class="modal-body-custom">
+                        No MVA account is currently linked to your Google profile: <span id="google-email-display" class="bold"></span> for the selected role.
+                    </p>
+                    <p class="modal-body-custom" style="margin-top: 1rem;">
+                        Do you want to create a new <span id="google-role-display" class="bold"></span> account?
+                    </p>
+                    <div class="modal-actions-custom" style="margin-top: 1.5rem;">
+                        <button id="cancel-google-register-btn" class="tertiary round no-margin">Cancel</button>
+                        <button id="confirm-google-register-btn" class="primary round">Yes, Create Account</button>
+                    </div>
+                </div>
+            </div>
+
+
             <div id="message-modal" class="modal-overlay hidden">
                 <div class="modal-content-custom card rounded large-padding medium-elevate">
                     <h5 id="message-modal-title" class="modal-header-custom">Message</h5>
@@ -276,7 +294,7 @@
                     <div class="divider-container">
                     </div>
 
-                    <button id="google-login-btn" class="border round fill responsive">
+                    <button id="google-login-btn" class="round fill responsive ripple">
                         <svg class="icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width: 20px; height: 20px; margin-right: 8px;">
                             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
                             <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>

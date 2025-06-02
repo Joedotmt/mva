@@ -1,5 +1,5 @@
 // --- Configuration ---
-const POCKETBASE_URL = 'http://127.0.0.1:8090'; // IMPORTANT: REPLACE IF NEEDED
+const POCKETBASE_URL = 'https://veterans.fly.dev/'; // IMPORTANT: REPLACE IF NEEDED
 const MEMBERSHIP_FEE = 10; // Annual membership fee in EUR
 
 // --- UI Elements ---
@@ -458,6 +458,13 @@ deleteVeteranBtn.addEventListener('click', async () =>
         async () =>
         {
             showLoading();
+            if (veteranToDelete && veteranToDelete.id_card_number && veteranToDelete.id_card_number.trim() !== '')
+            {
+                hideLoading();
+                showMessage("Deletion Prevented", `Cannot delete ${veteranName}. Deletion is only allowed if the ID card number is empty.`);
+                return;
+            }
+
             try
             {
                 const transactions = await pb.collection('transactions').getFullList({ filter: `veteran = "${currentEditingVeteranId}"` });
@@ -488,7 +495,7 @@ async function initAdminPage()
         pb = new PocketBase(POCKETBASE_URL);
         if (!pb.authStore.isValid)
         {
-            window.location.href = 'login.html';
+            window.location.href = '/';
             return;
         }
         const user = pb.authStore.model;
@@ -499,7 +506,7 @@ async function initAdminPage()
     {
         console.error("Initialization error:", error);
         showMessage("Error", "Failed to initialize admin panel. Please try logging in again.");
-        window.location.href = 'login.html';
+        window.location.href = '/';
     }
 }
 
@@ -509,7 +516,7 @@ async function handleLogout()
     try
     {
         pb.authStore.clear();
-        window.location.href = 'login.html';
+        window.location.href = '/';
     } catch (error)
     {
         console.error("Logout failed:", error);
