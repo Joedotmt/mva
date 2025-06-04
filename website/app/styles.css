@@ -83,6 +83,7 @@ main
     align-items: center;
     outline: 1px solid var(--inverse-surface);
     width: 100%;
+    min-height: 65px;
 }
 
 .bottom-unrounded
@@ -290,6 +291,13 @@ header
     color: var(--on-surface-variant);
     background-color: var(--surface-container-low);
     border-top: 1px solid var(--outline-variant);
+}
+
+
+
+.personal-info-section:has(div.field)>label.fieldlabel
+{
+    display: none;
 }
 
 dialog.modal.right

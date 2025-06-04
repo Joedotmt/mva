@@ -266,6 +266,8 @@ async function populateMemberDetailsForm(veteran, isEdit = false)
             const selectedLi = Array.from(detailStatusEditMenu.querySelectorAll('li')).find(li => li.dataset.value === statusToSet);
             detailStatusEditBtnText.textContent = selectedLi ? selectedLi.textContent : 'Select Status';
             detailStatusEditBtn.dataset.selectedValue = statusToSet;
+            // Add status badge class to the button
+            detailStatusEditBtn.className = `chip rounded large ripple ${getStatusBadgeClass(statusToSet)}`;
         }
     } else
     { // View Mode for Status
@@ -273,7 +275,7 @@ async function populateMemberDetailsForm(veteran, isEdit = false)
         if (viewStatusChip)
         {
             viewStatusChip.textContent = veteran.status || 'Unknown';
-            viewStatusChip.className = `chip large ripple ${getStatusBadgeClass(veteran.status)}`;
+            viewStatusChip.className = `chip rounded large ripple ${getStatusBadgeClass(veteran.status)}`;
         }
         if (editStatusControls) editStatusControls.classList.add('hidden');
     }
@@ -949,10 +951,14 @@ document.addEventListener('DOMContentLoaded', () =>
             item.addEventListener('click', () =>
             {
                 detailStatusEditBtnText.textContent = item.textContent;
-                detailStatusEditBtn.dataset.selectedValue = item.dataset.value; // Store value on button
-                if (typeof ui === 'function' && detailStatusEditMenu.classList.contains("active"))
+                const newStatus = item.dataset.value;
+                detailStatusEditBtn.dataset.selectedValue = newStatus;
+                detailStatusEditBtn.className = `chip rounded large ripple ${getStatusBadgeClass(newStatus)}`;
+                if (typeof ui === 'function')
                 {
                     ui('#detail-status-edit-menu');
+                    // Re-initialize BeerCSS for the button to maintain styling
+                    ui(detailStatusEditBtn);
                 }
             });
         });

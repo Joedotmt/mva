@@ -45,9 +45,9 @@ body.light
     /* Light Green */
     --status-member-text: #2e7d32;
     /* Dark Green */
-    --status-archive-bg: #e0e0e0;
+    --status-archive-bg: #000000;
     /* Light Grey */
-    --status-archive-text: #616161;
+    --status-archive-text: #bdbdbd;
     /* Dark Grey */
     --overdue-text-color: var(--error);
 }
@@ -95,7 +95,7 @@ body.dark
     --status-application-text: #ffcc80;
     --status-member-bg: #1b5e20;
     --status-member-text: #a5d6a7;
-    --status-archive-bg: #424242;
+    --status-archive-bg: #000000;
     --status-archive-text: #bdbdbd;
     --overdue-text-color: var(--error);
 }

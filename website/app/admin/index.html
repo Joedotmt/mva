@@ -12,8 +12,8 @@
     <link href="https://cdn.jsdelivr.net/npm/beercss@3.11.11/dist/cdn/beer.min.css" rel="stylesheet" />
     <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.11.11/dist/cdn/beer.min.js"></script>
     <script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
-    <link href="styles.css" rel="stylesheet" />
-    <link href="theme.css" rel="stylesheet" />
+    <link href="../styles.css" rel="stylesheet" />
+    <link href="../theme.css" rel="stylesheet" />
 </head>
 <body class="light">
     <div style="overflow: hidden; overflow-x: auto; width: 100dvw;">
@@ -114,23 +114,23 @@
                                 <h6>Personal Information</h6>
                                 <div style="display: flex; flex-direction: column; gap:5px">
                                     <div class="personal-info-section bottom-unrounded" data-field-container="full_name">
-                                        <label class="active" style="font-size: 1.5em;">Full Name</label>
+                                        <label class="active fieldlabel" style="font-size: 1.5em;">Full Name</label>
                                         <div id="view-full_name" data-field-view="full_name" class="large-text"></div>
                                     </div>
                                     <div class="personal-info-section" data-field-container="id_card_number">
-                                        <label class="active" style="font-size: 1.5em;">ID Card Number</label>
+                                        <label class="active fieldlabel" style="font-size: 1.5em;">ID Card Number</label>
                                         <div id="view-id_card_number" data-field-view="id_card_number" class="large-text"></div>
                                     </div>
-                                    <div class="personal-info-section" data-field-container="full_address">
-                                        <label class="active" style="font-size: 1.5em;">Full Address</label>
+                                    <div class="personal-info-section" style="height: 100px;" data-field-container="full_address">
+                                        <label class="active fieldlabel" style="font-size: 1.5em;">Full Address</label>
                                         <div id="view-full_address" data-field-view="full_address" class="large-text" style="white-space: pre-wrap;"></div>
                                     </div>
                                     <div class="personal-info-section" data-field-container="phone_number">
-                                        <label class="active" style="font-size: 1.5em;">Phone Number</label>
+                                        <label class="active fieldlabel" style="font-size: 1.5em;">Phone Number</label>
                                         <div id="view-phone_number" data-field-view="phone_number" class="large-text"></div>
                                     </div>
                                     <div class="personal-info-section top-unrounded" data-field-container="email">
-                                        <label class="active" style="font-size: 1.5em;">Email</label>
+                                        <label class="active fieldlabel" style="font-size: 1.5em;">Email</label>
                                         <div id="view-email" data-field-view="email" class="large-text"></div>
                                     </div>
                                 </div>
@@ -141,15 +141,15 @@
                                 <h6 style="margin-bottom: 0.2rem;">Next of Kin</h6>
                                 <div style="display: flex; gap: 5px;">
                                     <div class="personal-info-section right-unrounded" data-field-container="next_of_kin_full_name">
-                                        <label class="active">Name</label>
+                                        <label class="active fieldlabel">Name</label>
                                         <div id="view-next_of_kin_full_name" data-field-view="next_of_kin_full_name" class="large-text"></div>
                                     </div>
                                     <div class="personal-info-section" data-field-container="next_of_kin_full_phone_number">
-                                        <label class="active">Phone Number</label>
+                                        <label class="active fieldlabel">Phone Number</label>
                                         <div id="view-next_of_kin_full_phone_number" data-field-view="next_of_kin_full_phone_number" class="large-text"></div>
                                     </div>
                                     <div class="personal-info-section left-unrounded" data-field-container="next_of_kin_relationship">
-                                        <label class="active">Relationship</label>
+                                        <label class="active fieldlabel">Relationship</label>
                                         <div id="view-next_of_kin_relationship" data-field-view="next_of_kin_relationship" class="large-text"></div>
                                     </div>
                                 </div>
@@ -162,13 +162,14 @@
                                     <div class="personal-info-section bottom-unrounded" data-field-container="status">
                                         <label class="active" style="font-size: 1.5em;">Current Status:</label>
                                         <div id="view-status-chip-container" data-field-view="status">
-                                            <div id="view-status" class="chip large ripple" style="font-size: 1rem; pointer-events: none; margin-top: 0.25em;"></div>
+                                            <div id="view-status" style="font-size: 1rem; pointer-events: none;"></div>
                                         </div>
                                         <div id="edit-status-controls" class="hidden" style="margin-top: 0.25em;">
-                                            <div class="field label border no-margin"> <button id="detail-status-edit-btn" data-ui="#detail-status-edit-menu" class="responsive" style="justify-content: space-between; width: 100%;"> <span id="detail-status-edit-btn-text">Select Status</span>
+                                            <div class="field label border no-margin" style="width: fit-content;">
+                                                <div id="detail-status-edit-btn" data-ui="#detail-status-edit-menu" style="font-size: 1rem;">
+                                                    <span id="detail-status-edit-btn-text">Select Status</span>
                                                     <i>arrow_drop_down</i>
-                                                </button>
-                                                <label class="active">Status</label>
+                                                </div>
                                                 <menu id="detail-status-edit-menu" class="left">
                                                     <li data-value="Application">Application</li>
                                                     <li data-value="Member">Member</li>
@@ -178,23 +179,23 @@
                                         </div>
                                     </div>
                                     <div class="personal-info-section">
-                                        <label class="active" style="font-size: 1.5em;">Application Date (Created)</label>
+                                        <label class="active fieldlabel" style="font-size: 1.5em;">Application Date (Created)</label>
                                         <div id="view-applicationDate" class="large-text"></div>
                                     </div>
                                     <div class="personal-info-section">
-                                        <label class="active" style="font-size: 1.5em;">Registration Date</label>
+                                        <label class="active fieldlabel" style="font-size: 1.5em;">Registration Date</label>
                                         <div id="view-registrationDate" class="large-text"></div>
                                     </div>
                                     <div class="personal-info-section">
-                                        <label class="active" style="font-size: 1.5em;">Last Payment Date</label>
+                                        <label class="active fieldlabel" style="font-size: 1.5em;">Last Payment Date</label>
                                         <div id="view-lastPaymentDate" class="large-text"></div>
                                     </div>
                                     <div class="personal-info-section">
-                                        <label class="active" style="font-size: 1.5em;">Amount Owed</label>
+                                        <label class="active fieldlabel" style="font-size: 1.5em;">Amount Owed</label>
                                         <div id="view-amountOwed" class="large-text"></div>
                                     </div>
                                     <div class="personal-info-section top-unrounded">
-                                        <label class="active" style="font-size: 1.5em;">Next Due Date</label>
+                                        <label class="active fieldlabel" style="font-size: 1.5em;">Next Due Date</label>
                                         <div id="view-nextDueDate" class="large-text"></div>
                                     </div>
                                 </div>
@@ -262,8 +263,8 @@
                 <span>&copy; 2025 Malta Veterans Association - Admin Portal</span>
             </footer>
 
-            <script src="shared_app.js"></script>
-            <script src="admin_app.js"></script>
+            <script src="../shared_app.js"></script>
+            <script src="admin.js"></script>
         </div>
     </div>
 </body>
