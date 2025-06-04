@@ -937,4 +937,33 @@ document.addEventListener('DOMContentLoaded', () =>
 {
     document.getElementById('current-year').textContent = new Date().getFullYear();
     initPocketBase();
+
+    const emailInput = document.getElementById('email-input');
+    const sendOtpRegisterBtn = document.getElementById('send-otp-register-btn');
+    const otpCodeInput = document.getElementById('otp-code');
+    const verifyOtpBtn = document.getElementById('verify-otp-btn');
+
+    if (emailInput && sendOtpRegisterBtn)
+    {
+        emailInput.addEventListener('keydown', function (event)
+        {
+            if (event.key === 'Enter')
+            {
+                event.preventDefault(); // Prevent default action (e.g., form submission)
+                sendOtpRegisterBtn.click(); // Trigger click on the "Continue with Email" button
+            }
+        });
+    }
+
+    if (otpCodeInput && verifyOtpBtn)
+    {
+        otpCodeInput.addEventListener('keydown', function (event)
+        {
+            if (event.key === 'Enter')
+            {
+                event.preventDefault(); // Prevent default action
+                verifyOtpBtn.click(); // Trigger click on the "Verify & Login" button
+            }
+        });
+    }
 });

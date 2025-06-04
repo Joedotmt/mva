@@ -17,6 +17,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 
     <link href="styles.css" rel="stylesheet" />
+    <link href="theme.css" rel="stylesheet" />
     <style>
         body {
             font-family: 'Roboto', 'Inter', sans-serif;
@@ -314,38 +315,5 @@
         </div>
     </div>
     <script src="login_app.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () =>
-        {
-            const emailInput = document.getElementById('email-input');
-            const sendOtpRegisterBtn = document.getElementById('send-otp-register-btn');
-            const otpCodeInput = document.getElementById('otp-code');
-            const verifyOtpBtn = document.getElementById('verify-otp-btn');
-
-            if (emailInput && sendOtpRegisterBtn)
-            {
-                emailInput.addEventListener('keydown', function (event)
-                {
-                    if (event.key === 'Enter')
-                    {
-                        event.preventDefault(); // Prevent default action (e.g., form submission)
-                        sendOtpRegisterBtn.click(); // Trigger click on the "Continue with Email" button
-                    }
-                });
-            }
-
-            if (otpCodeInput && verifyOtpBtn)
-            {
-                otpCodeInput.addEventListener('keydown', function (event)
-                {
-                    if (event.key === 'Enter')
-                    {
-                        event.preventDefault(); // Prevent default action
-                        verifyOtpBtn.click(); // Trigger click on the "Verify & Login" button
-                    }
-                });
-            }
-        });
-    </script>
 </body>
 </html>

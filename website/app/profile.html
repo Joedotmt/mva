@@ -12,7 +12,7 @@
     <link href="https://cdn.jsdelivr.net/npm/beercss@3.11.11/dist/cdn/beer.min.css" rel="stylesheet" />
     <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.11.11/dist/cdn/beer.min.js"></script>
     <script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
-    <link href="styles.css" rel="stylesheet" />
+    <link href="theme.css" rel="stylesheet" />
     <style>
         body {
             display: flex;
@@ -25,9 +25,6 @@
         main {
             display: flex !important;
             flex-direction: column !important;
-        }
-
-        main {
             flex-grow: 1;
             padding: 1rem;
         }
@@ -47,11 +44,11 @@
         }
 
         .profile-card {
-            background-color: var(--surface-container);
+            background: var(--surface-container-lowest);
             border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 0px 0px 1px var(--outline-variant);
         }
 
         .profile-card h5,
@@ -133,11 +130,11 @@
         .info-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
+            gap: 1rem;
         }
 
         .info-item {
-            background-color: var(--surface-container-low);
+            background-color: var(--surface-container-high);
             padding: 1rem;
             border-radius: 8px;
         }
@@ -156,8 +153,12 @@
 
         .page-title {
             color: var(--primary);
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
             text-align: center;
+            padding: 1rem;
+            background: var(--surface-container-lowest);
+            border-radius: 12px;
+            box-shadow: 0 0px 0px 1px var(--outline-variant);
         }
 
         .action-button {
@@ -175,533 +176,188 @@
         .action-button:hover {
             background-color: var(--primary-container);
         }
+
+
+
+        .overdue-message-text {
+            flex: 1;
+        }
+
+
+
+        .paybutton {
+            width: 100%;
+            height: 4em;
+        }
+
+        .overdue-message-action {
+            flex: 0.5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            width: 100%;
+        }
+
+        .overdue-message-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .overdue-message-container {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            main {
+                padding: 0 0;
+            }
+
+            .profile-card {
+                border-radius: 0;
+                margin: 0;
+
+            }
+        }
     </style>
 </head>
 <body class="light">
-    <div style="overflow: auto; overflow-x: auto; width: 100dvw;">
-        <div style="min-width: min-content;">
-            <dialog id="loading-indicator" class="hidden">
-                <progress class="circle large"></progress>
-            </dialog>
 
-            <dialog class="modal" id="message-dialog">
-                <h5 id="message-dialog-title">Message</h5>
-                <p id="message-dialog-text" class="large-text"></p>
-                <nav class="right-align">
-                    <button class="primary" id="message-dialog-ok-btn" onclick="ui('#message-dialog')">OK</button>
-                </nav>
-            </dialog>
+    <dialog id="loading-indicator" class="hidden">
+        <progress class="circle large"></progress>
+    </dialog>
 
-            <header class="fixed" style="background-color: var(--inverse-primary);">
-                <nav>
-                    <img src="https://raw.githubusercontent.com/Joedotmt/mva/f57acb904a89a49a0afde957145b86855be5a706/branding/Logo%20No%20Text%20latest.svg" alt="MVA Logo" style="height: 3rem; margin-right: 0.5rem;">
-                    <h5 class="max">MVA Member Profile</h5>
-                    <button style="margin-left: auto;" class="transparent circle" id="theme-switcher"><i>light_mode</i></button>
-                    <button id="logout-btn">
-                        <span>Logout</span>
-                        <i>logout</i>
-                    </button>
-                </nav>
-            </header>
+    <dialog class="modal" id="message-dialog">
+        <h5 id="message-dialog-title">Message</h5>
+        <p id="message-dialog-text" class="large-text"></p>
+        <nav class="right-align">
+            <button class="primary" id="message-dialog-ok-btn" onclick="ui('#message-dialog')">OK</button>
+        </nav>
+    </dialog>
 
-            <main id="profile-content" class="hidden">
-                <h4 class="page-title">Welcome, <span id="veteran-name-title">Veteran</span>!</h4>
-                <div id="application-status-message" class="profile-card hidden" style="background-color: var(--surface-container-low); color: var(--on-surface-variant);"></div>
+    <header style="background-color: var(--inverse-primary);">
+        <nav>
+            <img src="https://raw.githubusercontent.com/Joedotmt/mva/f57acb904a89a49a0afde957145b86855be5a706/branding/Logo%20No%20Text%20latest.svg" alt="MVA Logo" style="height: 3rem;">
+            <h5 class="max">MVA</h5>
+            <button style="margin-left: auto;" class="transparent circle" id="theme-switcher"><i>light_mode</i></button>
+            <button id="logout-btn">
+                <span>Logout</span>
+                <i>logout</i>
+            </button>
+        </nav>
+    </header>
 
-                <div class="profile-card">
-                    <h5>Membership Overview</h5>
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <span class="label">Current Status</span>
-                            <p><span id="profile-status" class="status-badge">Loading...</span></p>
-                        </div>
-                        <div class="info-item" id="amount-owed-section">
-                            <span class="label">Amount Owed</span>
-                            <p id="profile-amount-owed">Loading...</p>
-                        </div>
-                        <div class="info-item" id="next-due-date-section">
-                            <span class="label">Next Payment Due</span>
-                            <p id="profile-next-due-date">Loading...</p>
-                        </div>
-                        <div class="info-item">
-                            <span class="label">Application Date</span>
-                            <p id="profile-application-date">Loading...</p>
-                        </div>
-                        <div class="info-item">
-                            <span class="label">Registered Since</span>
-                            <p id="profile-registration-date">Loading...</p>
-                        </div>
-                        <div class="info-item">
-                            <span class="label">Last Payment Date</span>
-                            <p id="profile-last-payment-date">Loading...</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="profile-card">
-                    <h5>Personal Information</h5>
-                    <div class="info-grid">
-                        <div class="info-item"><span class="label">Full Name</span>
-                            <p id="profile-full_name">Loading...</p>
-                        </div>
-                        <div class="info-item"><span class="label">ID Card Number</span>
-                            <p id="profile-id_card_number">Loading...</p>
-                        </div>
-                        <div class="info-item"><span class="label">Email Address</span>
-                            <p id="profile-email">Loading...</p>
-                        </div>
-                        <div class="info-item"><span class="label">Phone Number</span>
-                            <p id="profile-phone_number">Loading...</p>
-                        </div>
-                        <div class="info-item" style="grid-column: span 2;"><span class="label">Full Address</span>
-                            <p id="profile-full_address">Loading...</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="profile-card">
-                    <h5>Next of Kin Details</h5>
-                    <div class="info-grid">
-                        <div class="info-item"><span class="label">Full Name</span>
-                            <p id="profile-next_of_kin_full_name">Loading...</p>
-                        </div>
-                        <div class="info-item"><span class="label">Phone Number</span>
-                            <p id="profile-next_of_kin_full_phone_number">Loading...</p>
-                        </div>
-                        <div class="info-item"><span class="label">Relationship</span>
-                            <p id="profile-next_of_kin_relationship">Loading...</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="profile-card transaction-history">
-                    <h5>Transaction History</h5>
-                    <div class="responsive-table">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Amount Paid</th>
-                                    <th>Transaction ID (System)</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="transaction-history-body">
-                                <tr>
-                                    <td colspan="3" class="center-align">Loading transaction history...</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="profile-card">
-                    <h5>Admin Notes</h5>
-                    <div class="info-item" style="background-color: var(--surface-container-lowest);">
-                        <p id="profile-admin-note" style="white-space: pre-wrap;">Loading...</p>
-                    </div>
-                </div>
-
-
-            </main>
-
-            <footer class="app-footer">
-                <span>&copy; <span id="current-year"></span> Malta Veterans Association - Member Portal</span>
-            </footer>
+    <main id="profile-content" class="hidden">
+        <div class="profile-card">
+            <h4 style="text-align: center; color: var(--primary);">Welcome, <span id="veteran-name-title">Veteran</span>!</h4>
         </div>
-    </div>
-    <script>
-        // --- Configuration ---
-        const POCKETBASE_URL = 'https://veterans.fly.dev/'; // IMPORTANT: REPLACE
-        const VETERANS_COLLECTION = 'veterans';
-        const TRANSACTIONS_COLLECTION = 'transactions';
-        const MEMBERSHIP_FEE = 10; // EUR
+        <div id="application-status-message" class="profile-card hidden" style="background-color: var(--surface-container-low); color: var(--on-surface-variant);"></div>
 
-        // --- UI Elements ---
-        const loadingIndicator = document.getElementById('loading-indicator');
-        const messageDialogEl = document.getElementById('message-dialog');
-        const messageDialogTitle = document.getElementById('message-dialog-title');
-        const messageDialogText = document.getElementById('message-dialog-text');
+        <div class="profile-card">
+            <h5>Membership Overview</h5>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="label">Current Status</span>
+                    <p><span id="profile-status" class="status-badge">Loading...</span></p>
+                </div>
+                <div class="info-item" id="amount-owed-section">
+                    <span class="label">Amount Owed</span>
+                    <p id="profile-amount-owed">Loading...</p>
+                </div>
+                <div class="info-item" id="next-due-date-section">
+                    <span class="label">Next Payment Due</span>
+                    <p id="profile-next-due-date">Loading...</p>
+                </div>
+                <div class="info-item">
+                    <span class="label">Application Date</span>
+                    <p id="profile-application-date">Loading...</p>
+                </div>
+                <div class="info-item">
+                    <span class="label">Registered Since</span>
+                    <p id="profile-registration-date">Loading...</p>
+                </div>
+                <div class="info-item">
+                    <span class="label">Last Payment Date</span>
+                    <p id="profile-last-payment-date">Loading...</p>
+                </div>
+            </div>
+        </div>
 
-        const profileContent = document.getElementById('profile-content');
-        const veteranNameTitle = document.getElementById('veteran-name-title');
-        const profileStatus = document.getElementById('profile-status');
-        const profileAmountOwed = document.getElementById('profile-amount-owed');
-        const profileNextDueDate = document.getElementById('profile-next-due-date');
-        const profileApplicationDate = document.getElementById('profile-application-date');
-        const profileRegistrationDate = document.getElementById('profile-registration-date');
-        const profileLastPaymentDate = document.getElementById('profile-last-payment-date');
+        <div class="profile-card">
+            <h5>Personal Information</h5>
+            <div class="info-grid">
+                <div class="info-item"><span class="label">Full Name</span>
+                    <p id="profile-full_name">Loading...</p>
+                </div>
+                <div class="info-item"><span class="label">ID Card Number</span>
+                    <p id="profile-id_card_number">Loading...</p>
+                </div>
+                <div class="info-item"><span class="label">Email Address</span>
+                    <p id="profile-email">Loading...</p>
+                </div>
+                <div class="info-item"><span class="label">Phone Number</span>
+                    <p id="profile-phone_number">Loading...</p>
+                </div>
+                <div class="info-item"><span class="label">System ID</span>
+                    <p id="profile-system-id">Loading...</p>
+                </div>
+                <div class="info-item" style="grid-column: 1 / -1;"><span class="label">Full Address</span>
+                    <p id="profile-full_address">Loading...</p>
+                </div>
+            </div>
+        </div>
 
-        const profileFullName = document.getElementById('profile-full_name');
-        const profileIdCardNumber = document.getElementById('profile-id_card_number');
-        const profileEmail = document.getElementById('profile-email');
-        const profilePhoneNumber = document.getElementById('profile-phone_number');
-        const profileFullAddress = document.getElementById('profile-full_address');
+        <div class="profile-card">
+            <h5>Next of Kin Details</h5>
+            <div class="info-grid">
+                <div class="info-item"><span class="label">Full Name</span>
+                    <p id="profile-next_of_kin_full_name">Loading...</p>
+                </div>
+                <div class="info-item"><span class="label">Phone Number</span>
+                    <p id="profile-next_of_kin_full_phone_number">Loading...</p>
+                </div>
+                <div class="info-item"><span class="label">Relationship</span>
+                    <p id="profile-next_of_kin_relationship">Loading...</p>
+                </div>
+            </div>
+        </div>
 
-        const profileNextOfKinFullName = document.getElementById('profile-next_of_kin_full_name');
-        const profileNextOfKinFullPhoneNumber = document.getElementById('profile-next_of_kin_full_phone_number');
-        const profileNextOfKinRelationship = document.getElementById('profile-next_of_kin_relationship');
-        const profileAdminNote = document.getElementById('profile-admin-note');
-
-        const transactionHistoryBody = document.getElementById('transaction-history-body');
-        const applicationStatusMessageDiv = document.getElementById('application-status-message');
-        const logoutBtn = document.getElementById('logout-btn');
-        const themeSwitcherBtn = document.getElementById('theme-switcher');
-
-
-        // --- PocketBase Client & State ---
-        let pb = null;
-        let loggedInVeteran = null;
-
-        // --- Utility Functions ---
-        function showLoading() { loadingIndicator.classList.remove('hidden'); loadingIndicator.classList.add('flex'); }
-        function hideLoading() { loadingIndicator.classList.add('hidden'); loadingIndicator.classList.remove('flex'); }
-
-        function showMessage(title, text)
-        {
-            messageDialogTitle.textContent = title;
-            messageDialogText.textContent = text;
-            ui('#message-dialog');
-        }
-
-        function formatDate(dateString)
-        {
-            if (!dateString) return 'N/A';
-            try
-            {
-                const date = new Date(dateString);
-                if (isNaN(date.getTime())) return 'Invalid Date';
-                return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-            } catch (e) { return 'Invalid Date Format'; }
-        }
-
-        function formatCurrency(amount)
-        {
-            return `€${Number(amount).toFixed(2)}`;
-        }
-
-        function getStatusBadgeClass(status)
-        {
-            switch (status)
-            {
-                case 'Application': return 'status-application';
-                case 'Member': return 'status-member';
-                case 'Archive': return 'status-archive';
-                default: return '';
-            }
-        }
-
-        async function getLastPaymentTransaction(veteranId)
-        {
-            if (!pb) return null;
-            try
-            {
-                const transactions = await pb.collection(TRANSACTIONS_COLLECTION).getFullList({
-                    filter: `veteran = "${veteranId}"`,
-                    sort: '-created',
-                    perPage: 1,
-                });
-                return transactions.length > 0 ? transactions[0] : null;
-            } catch (error)
-            {
-                console.error(`Error fetching last payment transaction for ${veteranId}:`, error);
-                return null;
-            }
-        }
-        async function getFirstPaymentTransaction(veteranId)
-        {
-            if (!pb) return null;
-            try
-            {
-                const transactions = await pb.collection(TRANSACTIONS_COLLECTION).getFullList({
-                    filter: `veteran = "${veteranId}"`,
-                    sort: 'created',
-                    perPage: 1,
-                });
-                return transactions.length > 0 ? transactions[0] : null;
-            } catch (error)
-            {
-                console.error(`Error fetching first payment transaction for ${veteranId}:`, error);
-                return null;
-            }
-        }
+        <div class="profile-card transaction-history">
+            <h5>Transaction History</h5>
+            <div class="responsive-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Amount Paid</th>
+                            <th>Transaction ID (System)</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transaction-history-body">
+                        <tr>
+                            <td colspan="3" class="center-align">Loading transaction history...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="profile-card">
+            <h5>Admin Notes</h5>
+            <div class="info-item">
+                <p id="profile-admin-note" style="white-space: pre-wrap;">Loading...</p>
+            </div>
+        </div>
 
 
-        async function calculateAmountOwedAndOverdueStatus(veteranId, veteranStatus, veteranCreatedDate)
-        {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+    </main>
 
-            if (veteranStatus === 'Archive')
-            {
-                return { amountOwed: 0, isOverdue: false, nextDueDate: null, lastPaymentDate: null };
-            }
-
-            const lastPaymentTransaction = await getLastPaymentTransaction(veteranId);
-            let lastPaymentDate = null;
-            if (lastPaymentTransaction)
-            {
-                lastPaymentDate = new Date(lastPaymentTransaction.created);
-            }
-
-            let nextDueDate = null;
-            let amountOwed = 0;
-            let isOverdue = false;
-
-            if (veteranStatus === 'Application')
-            {
-                amountOwed = MEMBERSHIP_FEE;
-                isOverdue = true;
-            } else if (veteranStatus === 'Member')
-            {
-                if (lastPaymentDate)
-                {
-                    nextDueDate = new Date(lastPaymentDate);
-                    nextDueDate.setFullYear(nextDueDate.getFullYear() + 1);
-                    nextDueDate.setHours(0, 0, 0, 0);
-
-                    if (today >= nextDueDate)
-                    {
-                        amountOwed = MEMBERSHIP_FEE;
-                        isOverdue = true;
-                    } else
-                    {
-                        amountOwed = 0;
-                        isOverdue = false;
-                    }
-                } else
-                {
-                    amountOwed = MEMBERSHIP_FEE;
-                    isOverdue = true;
-                    if (veteranCreatedDate)
-                    {
-                        nextDueDate = new Date(veteranCreatedDate);
-                        nextDueDate.setFullYear(nextDueDate.getFullYear() + 1);
-                        nextDueDate.setHours(0, 0, 0, 0);
-                        if (today >= nextDueDate)
-                        {
-                            isOverdue = true;
-                        } else
-                        {
-                            isOverdue = true;
-                        }
-                    }
-                }
-            }
-            return {
-                amountOwed: amountOwed,
-                isOverdue: isOverdue,
-                nextDueDate: nextDueDate ? nextDueDate.toISOString() : null,
-                lastPaymentDate: lastPaymentDate ? lastPaymentDate.toISOString() : null
-            };
-        }
-
-        // --- Main Profile Logic ---
-        async function loadProfileData()
-        {
-            if (!pb.authStore.isValid || !pb.authStore.model || pb.authStore.model.collectionName !== VETERANS_COLLECTION)
-            {
-                window.location.href = '/';
-                return;
-            }
-            loggedInVeteran = pb.authStore.model;
-            showLoading();
-
-            try
-            {
-                // Fetch full veteran details (authStore model might be partial)
-                const veteranFullDetails = await pb.collection(VETERANS_COLLECTION).getOne(loggedInVeteran.id);
-                loggedInVeteran = veteranFullDetails; // Update with full details
-
-                const amountOwedSection = document.getElementById('amount-owed-section');
-                const nextDueDateSection = document.getElementById('next-due-date-section');
-
-                veteranNameTitle.textContent = loggedInVeteran.full_name || 'Veteran';
-
-                // Personal Info
-                profileFullName.textContent = loggedInVeteran.full_name || 'N/A';
-                profileIdCardNumber.textContent = loggedInVeteran.id_card_number || 'N/A';
-                profileEmail.textContent = loggedInVeteran.email || 'N/A';
-                profilePhoneNumber.textContent = loggedInVeteran.phone_number || 'N/A';
-                profileFullAddress.textContent = loggedInVeteran.full_address || 'N/A';
-
-                // Next of Kin
-                profileNextOfKinFullName.textContent = loggedInVeteran.next_of_kin_full_name || 'N/A';
-                profileNextOfKinFullPhoneNumber.textContent = loggedInVeteran.next_of_kin_full_phone_number || 'N/A';
-                profileNextOfKinRelationship.textContent = loggedInVeteran.next_of_kin_relationship || 'N/A';
-
-                // Admin Note
-                profileAdminNote.textContent = loggedInVeteran.admin_note || 'No administrative notes on file.';
-
-
-                // Membership Overview
-                profileStatus.textContent = loggedInVeteran.status || 'Unknown';
-                profileStatus.className = `status-badge ${getStatusBadgeClass(loggedInVeteran.status)}`;
-
-                profileApplicationDate.textContent = formatDate(loggedInVeteran.created);
-
-                let registrationDateDisplay = 'N/A';
-
-                if (loggedInVeteran.status === 'Application')
-                {
-                    applicationStatusMessageDiv.innerHTML = `
-                        <p style="margin-bottom: 0.5rem;">Thank you for applying to join the Malta Veterans Association.</p>
-                        <p style="margin-bottom: 0.5rem;">We’ve received your application and it’s currently under review by our team. Please allow a few days for the approval process. You’ll receive an email notification once your application has been approved.</p>
-                        <p>Once accepted, a one-time registration fee of €10 is required, followed by an annual membership fee of €10.</p>
-                    `;
-                    applicationStatusMessageDiv.classList.remove('hidden');
-                    amountOwedSection.classList.add('hidden');
-                    nextDueDateSection.classList.add('hidden');
-                    profileAmountOwed.textContent = formatCurrency(MEMBERSHIP_FEE); // Still show potential fee
-                    profileNextDueDate.textContent = 'N/A (Pending Approval)';
-                    profileLastPaymentDate.textContent = 'No payments yet'; // Applicants have no payment history
-
-                } else
-                {
-                    applicationStatusMessageDiv.classList.add('hidden');
-                    applicationStatusMessageDiv.innerHTML = ''; // Clear content
-                    amountOwedSection.classList.remove('hidden');
-                    nextDueDateSection.classList.remove('hidden');
-
-                    const paymentInfo = await calculateAmountOwedAndOverdueStatus(loggedInVeteran.id, loggedInVeteran.status, loggedInVeteran.created);
-                    profileAmountOwed.textContent = formatCurrency(paymentInfo.amountOwed);
-                    if (paymentInfo.isOverdue && paymentInfo.amountOwed > 0)
-                    {
-                        const overdueSpan = document.createElement('span');
-                        overdueSpan.className = 'overdue-indicator';
-                        overdueSpan.textContent = '(Overdue)';
-                        profileAmountOwed.appendChild(overdueSpan);
-                    }
-                    profileNextDueDate.textContent = formatDate(paymentInfo.nextDueDate);
-
-                    if (paymentInfo.lastPaymentDate)
-                    {
-                        profileLastPaymentDate.textContent = formatDate(paymentInfo.lastPaymentDate);
-                    } else
-                    {
-                        profileLastPaymentDate.textContent = 'No payments yet';
-                    }
-                }
-
-                if (loggedInVeteran.status === 'Member' || loggedInVeteran.status === 'Archive') // Also show for archive if they were a member
-                {
-                    const firstPayment = await getFirstPaymentTransaction(loggedInVeteran.id);
-                    registrationDateDisplay = formatDate(firstPayment ? firstPayment.created : loggedInVeteran.created);
-                } else
-                { // If not member, check if they ever made a payment (e.g. archived member)
-                    const firstPayment = await getFirstPaymentTransaction(loggedInVeteran.id);
-                    if (firstPayment) registrationDateDisplay = formatDate(firstPayment.created);
-                }
-                profileRegistrationDate.textContent = registrationDateDisplay;
-
-                // Transaction History
-                const transactions = await pb.collection(TRANSACTIONS_COLLECTION).getFullList({
-                    filter: `veteran = "${loggedInVeteran.id}"`,
-                    sort: '-created'
-                });
-
-                transactionHistoryBody.innerHTML = ''; // Clear loading/previous
-                if (transactions.length > 0)
-                {
-                    transactions.forEach(tx =>
-                    {
-                        const row = transactionHistoryBody.insertRow();
-                        row.insertCell().textContent = formatDate(tx.created);
-                        row.insertCell().textContent = formatCurrency(tx.amount_paid);
-                        row.insertCell().textContent = tx.id;
-
-                        // Actions cell
-                        const actionsCell = row.insertCell();
-                        const viewButton = document.createElement('button');
-                        viewButton.textContent = 'View';
-                        viewButton.className = 'action-button';
-                        viewButton.onclick = () => { /* View action */ };
-                        actionsCell.appendChild(viewButton);
-
-                        const editButton = document.createElement('button');
-                        editButton.textContent = 'Edit';
-                        editButton.className = 'action-button';
-                        editButton.onclick = () => { /* Edit action */ };
-                        actionsCell.appendChild(editButton);
-                    });
-                } else
-                {
-                    transactionHistoryBody.innerHTML = '<tr><td colspan="4" class="center-align">No transactions found.</td></tr>';
-                }
-
-                profileContent.classList.remove('hidden');
-            } catch (error)
-            {
-                console.error("Error loading profile data:", error);
-                showMessage("Error", "Could not load your profile data. Please try logging in again.");
-                // pb.authStore.clear(); 
-                // window.location.href = '/';
-            } finally
-            {
-                hideLoading();
-            }
-        }
-
-        async function handleLogout()
-        {
-            showLoading();
-            try
-            {
-                pb.authStore.clear();
-                window.location.href = '/';
-            } catch (error)
-            {
-                console.error("Logout failed:", error);
-                showMessage("Logout Error", "An error occurred during logout.");
-            } finally
-            {
-                hideLoading();
-            }
-        }
-
-        function toggleTheme()
-        {
-            const body = document.body;
-            body.classList.toggle('dark');
-            body.classList.toggle('light');
-            themeSwitcherBtn.innerHTML = body.classList.contains('dark') ? '<i>dark_mode</i>' : '<i>light_mode</i>';
-            // Optionally, save theme preference to localStorage
-            localStorage.setItem('theme', body.classList.contains('dark') ? 'dark' : 'light');
-        }
-
-
-        // --- Initialization ---
-        document.addEventListener('DOMContentLoaded', () =>
-        {
-            pb = new PocketBase(POCKETBASE_URL);
-            document.getElementById('current-year').textContent = new Date().getFullYear();
-
-            // Apply saved theme or default to light
-            const savedTheme = localStorage.getItem('theme');
-            if (savedTheme === 'dark')
-            {
-                document.body.classList.remove('light');
-                document.body.classList.add('dark');
-                themeSwitcherBtn.innerHTML = '<i>dark_mode</i>';
-            } else
-            {
-                themeSwitcherBtn.innerHTML = '<i>light_mode</i>'; // Default
-            }
-
-
-            if (pb.authStore.isValid && pb.authStore.model && pb.authStore.model.collectionName === VETERANS_COLLECTION)
-            {
-                loadProfileData();
-            } else
-            {
-                // If not a valid veteran session, clear and redirect.
-                pb.authStore.clear();
-                window.location.href = '/';
-            }
-
-            logoutBtn.addEventListener('click', handleLogout);
-            themeSwitcherBtn.addEventListener('click', toggleTheme);
-            ui(); // Initialize BeerCSS components like modals
-        });
-    </script>
+    <footer class="app-footer">
+        <span>&copy; <span id="current-year"></span> Malta Veterans Association - Member Portal</span>
+    </footer>
+    <script src="profile_app.js"></script>
 </body>
 </html>
