@@ -127,6 +127,12 @@ function getStatusBadgeClass(status)
  */
 async function getLastPaymentTransaction(veteranId)
 {
+    // Check cache first
+    if (lastPaymentCache.has(veteranId))
+    {
+        return lastPaymentCache.get(veteranId);
+    }
+    console.log(`[CACHE MISS] Fetching last payment transaction for ${veteranId}`); // Added log
     if (!pb)
     {
         console.error("PocketBase instance (pb) is not available for getLastPaymentTransaction.");
@@ -139,7 +145,12 @@ async function getLastPaymentTransaction(veteranId)
             sort: '-created',
             perPage: 1, // Limit to 1 record
         });
-        return transactions.length > 0 ? transactions[0] : null;
+        const lastTransaction = transactions.length > 0 ? transactions[0] : null;
+
+        // Store in cache before returning
+        lastPaymentCache.set(veteranId, lastTransaction);
+        console.log(`[CACHE POPULATED] getLastPaymentTransaction for ${veteranId}`); // Added log
+        return lastTransaction;
     } catch (error)
     {
         console.error(`Error fetching last payment transaction for veteran ${veteranId}:`, error);
@@ -156,6 +167,11 @@ async function getLastPaymentTransaction(veteranId)
  */
 async function getFirstPaymentTransaction(veteranId)
 {
+    // Check cache first
+    if (firstPaymentCache.has(veteranId))
+    {
+        return firstPaymentCache.get(veteranId);
+    }
     if (!pb)
     {
         console.error("PocketBase instance (pb) is not available for getFirstPaymentTransaction.");
@@ -168,7 +184,11 @@ async function getFirstPaymentTransaction(veteranId)
             sort: 'created', // Sort by oldest first
             perPage: 1,    // Limit to 1 record
         });
-        return transactions.length > 0 ? transactions[0] : null;
+        const firstTransaction = transactions.length > 0 ? transactions[0] : null;
+
+        // Store in cache before returning
+        firstPaymentCache.set(veteranId, firstTransaction);
+        return firstTransaction;
     } catch (error)
     {
         console.error(`Error fetching first payment transaction for veteran ${veteranId}:`, error);
@@ -176,6 +196,46 @@ async function getFirstPaymentTransaction(veteranId)
         return null;
     }
 }
+
+/**
+ * Fetches all payment transactions for a given veteran, with caching.
+ * Assumes 'pb' (PocketBase instance) is globally available and initialized.
+ * @param {string} veteranId - The ID of the veteran.
+ * @returns {Promise<Array<Object>>} - An array of transaction objects.
+ */
+async function getAllTransactionsForVeteran(veteranId)
+{
+    // Check cache first
+    if (allTransactionsCache.has(veteranId))
+    {
+        console.log(`[CACHE HIT] getAllTransactionsForVeteran for ${veteranId}`);
+        return allTransactionsCache.get(veteranId);
+    }
+    console.log(`[CACHE MISS] Fetching all transactions for ${veteranId}`);
+    if (!pb)
+    {
+        console.error("PocketBase instance (pb) is not available for getAllTransactionsForVeteran.");
+        return [];
+    }
+    try
+    {
+        const transactions = await pb.collection(TRANSACTIONS_COLLECTION).getFullList({
+            filter: `veteran = "${veteranId}"`,
+            sort: '-created', // Sort by newest first
+        });
+
+        // Store in cache before returning
+        allTransactionsCache.set(veteranId, transactions);
+        console.log(`[CACHE POPULATED] getAllTransactionsForVeteran for ${veteranId}`);
+        return transactions;
+    } catch (error)
+    {
+        console.error(`Error fetching all transactions for veteran ${veteranId}:`, error);
+        // showMessage("Error", `Could not fetch transactions for veteran ${veteranId}.`); // Optional
+        return [];
+    }
+}
+
 
 /**
  * Calculates the amount owed by a veteran and their overdue status.
@@ -292,3 +352,71 @@ async function handleLogout()
 //   // ... rest of your app initialization
 // });
 // The shared functions above will then use this globally available 'pb' instance.
+
+// --- Shared Caches ---
+const lastPaymentCache = new Map();
+const firstPaymentCache = new Map();
+const allTransactionsCache = new Map();
+
+// Global store for active timers.
+// Each key is an ID, and the value is an object: { startTime: number, label: string }
+const activeMeasureTimers = {};
+
+/**
+ * Starts or stops a timer for a given ID and logs the execution time.
+ * The first call with a specific ID starts the timer.
+ * The second call with the same ID stops the timer and logs the duration.
+ *
+ * @param {number|string} id - A unique identifier for this specific measurement.
+ * This ID is used to match start and stop calls.
+ * @param {string} [label] - An optional descriptive label for the operation being timed.
+ * This label is associated with the ID when the timer is started
+ * and will be used in the log output when stopped. If not provided
+ * on start, a default label ("Operation") will be used.
+ * This parameter is ignored on the second (stop) call for an ID.
+ * @returns {number|undefined} The execution time in milliseconds if the timer is stopped,
+ * otherwise undefined (when the timer is started).
+ * Returns -1 if no ID is provided or another error occurs.
+ */
+function measureExecutionTime(id)
+{
+    // Ensure an ID is provided
+    if (id === undefined || id === null)
+    {
+        console.error('Error: An ID must be provided for measureExecutionTime.');
+        return -1; // Indicate an error
+    }
+
+    try
+    {
+        if (activeMeasureTimers.hasOwnProperty(id))
+        {
+            // This is the STOP call
+            const timerData = activeMeasureTimers[id];
+            const endTime = performance.now();
+            const durationMs = endTime - timerData.startTime;
+            const durationSec = durationMs / 1000;
+
+            console.log(`${id} time: ${durationSec.toFixed(4)} seconds`);
+            delete activeMeasureTimers[id]; // Clear the timer for this ID to allow reuse
+            return durationSec;
+        } else
+        {
+            // This is the START call
+            activeMeasureTimers[id] = {
+                startTime: performance.now(),
+            };
+            console.log(`${id} time`);
+            return undefined;
+        }
+    } catch (error)
+    {
+        console.error(`Error in measureExecutionTime for ID '${id}':`, error);
+        if (activeMeasureTimers.hasOwnProperty(id) &&
+            !(activeMeasureTimers[id].startTime))
+        {
+            delete activeMeasureTimers[id];
+        }
+        return -1; // Indicate an error
+    }
+}

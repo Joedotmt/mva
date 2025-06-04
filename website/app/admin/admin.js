@@ -24,7 +24,6 @@ let currentActionCallback = null;
 
 // Member Details Drawer Elements
 const memberDetailsDrawer = document.getElementById('member-details-drawer');
-const detailsPanelPlaceholder = document.getElementById('details-panel-placeholder');
 const detailsPanelContent = document.getElementById('details-panel-content'); // Main content area
 const detailsPanelFooterActions = document.getElementById('details-panel-footer-actions');
 const memberDetailsDrawerTitle = document.getElementById('member-details-drawer-title');
@@ -101,34 +100,20 @@ if (confirmActionConfirmBtn)
 }
 
 // --- Veteran Data Management Functions ---
-async function getTransactionsForVeteran(veteranId)
-{
-    if (!pb)
-    {
-        console.error("PocketBase instance (pb) is not available for getTransactionsForVeteran.");
-        return [];
-    }
-    try
-    {
-        const transactions = await pb.collection(TRANSACTIONS_COLLECTION).getFullList({
-            filter: `veteran = "${veteranId}"`,
-            sort: '-created',
-        });
-        return transactions;
-    } catch (error)
-    {
-        console.error(`Error fetching transactions for veteran ${veteranId}:`, error);
-        showMessage("Transaction Error", `Could not load transactions for veteran ${veteranId}. ${error.message || ''}`);
-        return [];
-    }
-}
+// getTransactionsForVeteran is now replaced by the shared getAllTransactionsForVeteran
+// No, populateTransactionsTable will call the shared one directly.
+// We can remove the admin-specific getTransactionsForVeteran if it's no longer used elsewhere,
+// or update it to be a simple wrapper if preferred, but direct usage of the shared function is cleaner.
+// For this change, we'll update populateTransactionsTable to use the shared function.
+
+
 
 async function populateTransactionsTable(veteranId)
 {
     const viewTransactionsTableBody = document.getElementById('view-transactions-table-body');
     if (!viewTransactionsTableBody) return;
     viewTransactionsTableBody.innerHTML = `<tr><td colspan="4" class="center-align large-padding">Loading transactions...</td></tr>`;
-    const transactions = await getTransactionsForVeteran(veteranId);
+    const transactions = await getAllTransactionsForVeteran(veteranId); // Use shared cached function
 
     if (transactions.length === 0)
     {
@@ -153,15 +138,17 @@ function stripHtml(html)
     return doc.body.textContent || "";
 }
 
-
 /**
  * Populates the member details form/view in the drawer.
  * Dynamically creates input fields for editing or displays text for viewing.
  */
 async function populateMemberDetailsForm(veteran, isEdit = false)
 {
+
     const paymentInfo = await calculateAmountOwedAndOverdueStatus(veteran.id, veteran.status, veteran.created);
+
     const amountOwedText = `${formatCurrency(paymentInfo.amountOwed)}${paymentInfo.isOverdue && paymentInfo.amountOwed > 0 ? ' <span class="overdue-indicator">(Overdue)</span>' : ''}`;
+
     let registrationDateDisplay = 'N/A';
     const firstPaymentTransaction = await getFirstPaymentTransaction(veteran.id);
     if (veteran.status === 'Member' || (veteran.status === 'Archive' && firstPaymentTransaction))
@@ -197,13 +184,6 @@ async function populateMemberDetailsForm(veteran, isEdit = false)
             // Apply BeerCSS styling for text fields.
             // The 'no-margin' class is from BeerCSS to remove default field margins if needed.
             inputWrapper.className = `field ${field.type === 'textarea' ? 'textarea' : ''} label border field-input-wrapper no-margin`;
-            if (field.key === 'admin_note')
-            {
-                // inputWrapper.style.padding = "0.5em 1em"; // custom padding for admin note input like its view
-            } else
-            {
-                inputWrapper.style.height = 'auto'; // Allow wrapper to size to content
-            }
 
 
             let inputEl;
@@ -297,6 +277,112 @@ async function populateMemberDetailsForm(veteran, isEdit = false)
     if (typeof ui === 'function') ui(); // Re-initialize BeerCSS for any dynamic components
 }
 
+/**
+ * Sets up PocketBase realtime subscriptions for veterans and transactions.
+ * Updates the UI and local data based on server-side changes.
+ */
+function setupRealtimeSubscriptions()
+{
+    if (!pb)
+    {
+        console.error("PocketBase instance not available for realtime subscriptions.");
+        return;
+    }
+
+    // Subscribe to Veterans collection changes
+    pb.collection(VETERANS_COLLECTION).subscribe('*', async function (e)
+    {
+        console.log('[Realtime] Veteran event:', e.action, e.record.id);
+
+        // Invalidate caches related to this veteran as its core data or status changed
+        if (typeof lastPaymentCache !== 'undefined') lastPaymentCache.delete(e.record.id);
+        if (typeof firstPaymentCache !== 'undefined') firstPaymentCache.delete(e.record.id);
+        if (typeof allTransactionsCache !== 'undefined') allTransactionsCache.delete(e.record.id);
+
+        if (e.action === 'create')
+        {
+            // Re-fetch all veterans to include the new one and maintain sort order
+            // This is simpler than trying to insert into the sorted array
+            await fetchVeterans();
+            showMessage("New Veteran", `A new veteran has been added: ${e.record.full_name || e.record.email}.`);
+        } else if (e.action === 'update')
+        {
+            // Find and update the veteran in the local array
+            const index = allVeterans.findIndex(v => v.id === e.record.id);
+            if (index > -1)
+            {
+                allVeterans[index] = e.record; // Update the record with the latest data
+                console.log(`[Realtime] Updated veteran ${e.record.id} in local cache.`);
+            } else
+            {
+                console.warn(`[Realtime] Updated veteran ${e.record.id} not found in local allVeterans array.`);
+                // If not found, maybe it was filtered out? Re-fetch just to be safe.
+                await fetchVeterans(); // Re-fetch all to ensure consistency
+            }
+
+            await filterAndDisplayVeterans(); // Re-render the list with updated data
+
+            // If the updated veteran's drawer is open, refresh its content
+            if (currentEditingVeteranId === e.record.id && memberDetailsDrawer && (memberDetailsDrawer.open || memberDetailsDrawer.classList.contains('active')))
+            {
+                console.log(`[Realtime] Refreshing drawer for veteran ${e.record.id}`);
+                // Re-populate the form/view. Pass the updated record directly.
+                // Keep the current mode (view/edit) but refresh the data displayed.
+                // Note: This will overwrite view data even if in edit mode, but won't touch input values.
+                await populateMemberDetailsForm(e.record, isMemberDetailsEditMode);
+            }
+
+        } else if (e.action === 'delete')
+        {
+            // Remove the veteran from the local array
+            allVeterans = allVeterans.filter(v => v.id !== e.record.id);
+            console.log(`[Realtime] Removed veteran ${e.record.id} from local cache.`);
+            await filterAndDisplayVeterans(); // Re-render the list
+
+            // If the deleted veteran's drawer is open, close it
+            if (currentEditingVeteranId === e.record.id && memberDetailsDrawer && (memberDetailsDrawer.open || memberDetailsDrawer.classList.contains('active')))
+            {
+                console.log(`[Realtime] Closing drawer for deleted veteran ${e.record.id}`);
+                if (typeof ui === 'function') ui("#member-details-drawer").close();
+                else memberDetailsDrawer.classList.remove('active');
+                // closeMemberDetailsPanelLogic will handle cleanup
+            }
+            showMessage("Veteran Deleted", `Veteran ${e.record.full_name || e.record.email} has been deleted.`);
+        }
+    });
+
+    // Subscribe to Transactions collection changes
+    pb.collection(TRANSACTIONS_COLLECTION).subscribe('*', async function (e)
+    {
+        console.log('[Realtime] Transaction event:', e.action, e.record.id, 'for veteran:', e.record.veteran);
+        const veteranId = e.record.veteran;
+
+        // Invalidate caches for the affected veteran
+        if (typeof lastPaymentCache !== 'undefined') lastPaymentCache.delete(veteranId);
+        if (typeof firstPaymentCache !== 'undefined') firstPaymentCache.delete(veteranId);
+        if (typeof allTransactionsCache !== 'undefined') allTransactionsCache.delete(veteranId);
+
+        // Re-render the main list as payment status/amount might have changed
+        await filterAndDisplayVeterans();
+
+        // If the affected veteran's drawer is open, refresh transaction table and payment info
+        if (currentEditingVeteranId === veteranId && memberDetailsDrawer && (memberDetailsDrawer.open || memberDetailsDrawer.classList.contains('active')))
+        {
+            console.log(`[Realtime] Refreshing transaction table and payment info in drawer for veteran ${veteranId}`);
+            await populateTransactionsTable(veteranId);
+            // Recalculate and display payment info
+            // Need the veteran's status and created date for calculateAmountOwedAndOverdueStatus
+            const veteran = allVeterans.find(v => v.id === veteranId);
+            if (veteran)
+            {
+                // Pass the veteran object to populateMemberDetailsForm to update payment/status display
+                // Keep the current edit mode
+                await populateMemberDetailsForm(veteran, isMemberDetailsEditMode);
+            }
+        }
+    });
+    console.log("PocketBase realtime subscriptions setup.");
+}
 
 /**
  * Sets the mode (view/edit) for the member details drawer.
@@ -304,6 +390,7 @@ async function populateMemberDetailsForm(veteran, isEdit = false)
 async function setMemberDetailsMode(isEdit)
 {
     isMemberDetailsEditMode = isEdit;
+
     const veteran = allVeterans.find(m => m.id === currentEditingVeteranId);
 
     if (!veteran && isEdit)
@@ -351,7 +438,6 @@ async function openMemberDetailsPanel(veteranId, rowElement)
     originalVeteranDataForEdit = { ...veteran };
     if (memberDetailsDrawerTitle) memberDetailsDrawerTitle.textContent = `Details for ${veteran.full_name || 'Veteran'}`;
 
-    if (detailsPanelPlaceholder) detailsPanelPlaceholder.classList.add('hidden');
     if (detailsPanelContent)
     {
         detailsPanelContent.style.opacity = '0';
@@ -389,7 +475,6 @@ function closeMemberDetailsPanelLogic()
     }
 
     if (drawerContentLoader) drawerContentLoader.classList.add('hidden');
-    if (detailsPanelPlaceholder) detailsPanelPlaceholder.classList.remove('hidden');
 
     if (detailsPanelContent)
     {
@@ -442,22 +527,8 @@ if (memberDetailsDrawer)
 
 if (memberDetailsEditBtn) memberDetailsEditBtn.addEventListener('click', () => setMemberDetailsMode(true));
 
-if (memberDetailsCancelEditBtn)
-{
-    memberDetailsCancelEditBtn.addEventListener('click', async () =>
-    {
-        if (originalVeteranDataForEdit)
-        {
-            showLoading(); // Use global loading for this quick revert
-            // No need to call populate directly, setMemberDetailsMode(false) will use originalVeteranDataForEdit
-            await setMemberDetailsMode(false);
-            hideLoading();
-        } else
-        {
-            setMemberDetailsMode(false); // Fallback if original data is somehow lost
-        }
-    });
-}
+if (memberDetailsCancelEditBtn) memberDetailsCancelEditBtn.addEventListener('click', () => setMemberDetailsMode(false));
+
 
 if (memberDetailsSaveBtn)
 {
@@ -596,6 +667,9 @@ async function initAdminPage()
 
         if (adminContent) adminContent.classList.remove('hidden');
         await fetchVeterans();
+
+        // Setup Realtime Subscriptions
+        setupRealtimeSubscriptions();
 
     } catch (error)
     {
@@ -859,47 +933,57 @@ async function confirmUpdateVeteranStatus(veteranId, newStatus, title, text)
 
 async function confirmRecordPayment(veteranId, veteranName)
 {
-    showConfirmActionModal(
-        `Confirm Payment`,
-        `Record a payment of ${formatCurrency(MEMBERSHIP_FEE)} for ${veteranName || 'this veteran'}?`,
-        async () =>
-        {
-            showLoading();
-            try
+    showConfirmActionModal
+        (
+            `Confirm Payment`,
+            `Record a payment of ${formatCurrency(MEMBERSHIP_FEE)} for ${veteranName || 'this veteran'}?`,
+            async () =>
             {
-                await pb.collection(TRANSACTIONS_COLLECTION).create({
-                    veteran: veteranId,
-                    amount_paid: MEMBERSHIP_FEE,
-                });
-
-                const veteran = allVeterans.find(v => v.id === veteranId);
-                if (veteran && veteran.status === 'Application')
+                showLoading();
+                try
                 {
-                    await pb.collection(VETERANS_COLLECTION).update(veteranId, { status: 'Member' });
-                }
+                    await pb.collection(TRANSACTIONS_COLLECTION).create({
+                        veteran: veteranId,
+                        amount_paid: MEMBERSHIP_FEE,
+                    });
+                    // Invalidate cache for this veteran's last payment
+                    // and all transactions, and first payment
+                    if (typeof lastPaymentCache !== 'undefined') lastPaymentCache.delete(veteranId);
+                    if (typeof firstPaymentCache !== 'undefined') firstPaymentCache.delete(veteranId);
+                    if (typeof allTransactionsCache !== 'undefined') allTransactionsCache.delete(veteranId);
 
-                await fetchVeterans(); // Refresh list and drawer data
 
-                if (currentEditingVeteranId === veteranId && memberDetailsDrawer && (memberDetailsDrawer.open || memberDetailsDrawer.classList.contains('active')))
-                {
-                    const updatedVeteranData = allVeterans.find(v => v.id === veteranId);
-                    if (updatedVeteranData)
+
+                    const veteran = allVeterans.find(v => v.id === veteranId);
+                    if (veteran && veteran.status === 'Application')
                     {
-                        originalVeteranDataForEdit = { ...updatedVeteranData };
-                        await populateMemberDetailsForm(updatedVeteranData, isMemberDetailsEditMode);
+                        await pb.collection(VETERANS_COLLECTION).update(veteranId, { status: 'Member' });
                     }
+
+                    await fetchVeterans(); // Refresh list and drawer data
+
+                    if (currentEditingVeteranId === veteranId && memberDetailsDrawer && (memberDetailsDrawer.open || memberDetailsDrawer.classList.contains('active')))
+                    {
+                        const updatedVeteranData = allVeterans.find(v => v.id === veteranId);
+                        if (updatedVeteranData)
+                        {
+                            originalVeteranDataForEdit = { ...updatedVeteranData };
+                            await populateMemberDetailsForm(updatedVeteranData, isMemberDetailsEditMode);
+                        }
+                    }
+                    showMessage("Payment Recorded", `Payment of ${formatCurrency(MEMBERSHIP_FEE)} recorded for ${veteranName || 'Veteran'}.`);
                 }
-                showMessage("Payment Recorded", `Payment of ${formatCurrency(MEMBERSHIP_FEE)} recorded for ${veteranName || 'Veteran'}.`);
-            } catch (error)
-            {
-                console.error("Error recording payment:", error);
-                showMessage("Payment Error", `Failed to record payment for ${veteranName || 'Veteran'}. ${error.data?.message || error.message}`);
-            } finally
-            {
-                hideLoading();
+                catch (error)
+                {
+                    console.error("Error recording payment:", error);
+                    showMessage("Payment Error", `Failed to record payment for ${veteranName || 'Veteran'}. ${error.data?.message || error.message}`);
+                }
+                finally
+                {
+                    hideLoading();
+                }
             }
-        }
-    );
+        );
 }
 
 // --- Event Listeners & Initialization ---

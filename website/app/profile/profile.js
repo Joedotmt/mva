@@ -42,7 +42,7 @@ let loggedInVeteran = null;
  */
 async function loadProfileData()
 {
-    if (!pb || !pb.authStore.isValid || !pb.authStore.model || pb.authStore.model.collectionName !== VETERANS_COLLECTION)
+    if (!pb || !pb.authStore.isValid || !pb.authStore.model || pb.authStore.model.collectionName !== VETERANS_COLLECTION || !loggedInVeteran)
     {
         if (pb) pb.authStore.clear(); // Clear potentially invalid store
         window.location.href = '/'; // Redirect to login/home
@@ -177,10 +177,7 @@ async function loadProfileData()
         if (profileRegistrationDate) profileRegistrationDate.textContent = registrationDateDisplay;
 
         // Transaction History
-        const transactions = await pb.collection(TRANSACTIONS_COLLECTION).getFullList({ // Uses shared constant
-            filter: `veteran = "${loggedInVeteran.id}"`,
-            sort: '-created'
-        });
+        const transactions = await getAllTransactionsForVeteran(loggedInVeteran.id); // Use shared cached function
 
         if (transactionHistoryBody)
         {

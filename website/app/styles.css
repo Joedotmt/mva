@@ -69,9 +69,31 @@ main
     display: flex;
     flex-direction: column;
     border-radius: 1.5em;
+    font-size: 0.5em;
     margin-top: 0.75em;
     margin-right: 0.5em;
+    width: 650px;
 }
+
+#member-details-drawer:not(.right)
+{
+    min-height: 95vh;
+    top: 2.5vh;
+    margin: 0;
+}
+
+dialog:not(.right)
+{
+    transform: scaleY(0.8) translate(-50%, 0) !important;
+
+}
+
+dialog:is(.active, [open]):not(.right)
+{
+    visibility: visible;
+    transform: scaleY(1) translate(-50%, 0) !important;
+}
+
 
 .personal-info-section
 {
@@ -119,12 +141,12 @@ main
 {
     #member-details-drawer
     {
-        margin: 0;
+        margin: 0 !important;
         border-radius: 0;
-        height: 100vh;
+        min-height: 100vh !important;
         width: 100vw;
+        top: 0 !important;
     }
-
 }
 
 #member-details-drawer header
@@ -320,6 +342,11 @@ dialog.modal.right::backdrop
 #member-details-drawer .drawer-body
 {
     overflow-y: auto;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
 }
 
 #member-details-drawer header

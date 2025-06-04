@@ -92,7 +92,7 @@
                     </div>
                 </div>
 
-                <dialog class="modal right large" id="member-details-drawer" style="font-size: 0.5em;">
+                <dialog class="modal" id="member-details-drawer">
                     <header style="font-size: 0.1em;">
                         <nav>
                             <button class="ripple transparent circle close-details-btn">
@@ -101,16 +101,17 @@
                             <h5 class="max" id="member-details-drawer-title">Veteran Details</h5>
                         </nav>
                     </header>
+
+
+
                     <div class="drawer-body">
-                        <div id="details-panel-placeholder" class="center-align large-padding">
-                            <i>info</i>
-                            <p class="medium-text">Select a veteran from the list to view their details.</p>
+
+                        <div id="drawer-content-loader" style="width: 100%; display: flex; align-content: center; justify-content: center; padding: 10em;">
+                            <progress style="width: 10em; height: 10em;" class="circle large"></progress>
                         </div>
-                        <div id="drawer-content-loader" class="center-align large-padding hidden"> <progress class="circle large"></progress>
-                            <p>Loading details...</p>
-                        </div>
+
                         <div id="details-panel-content" class="hidden">
-                            <section class="large-margin" id="personal-information-section-container">
+                            <section class="large-margin" style="margin-top: 1em !important;" id="personal-information-section-container">
                                 <h6>Personal Information</h6>
                                 <div style="display: flex; flex-direction: column; gap:5px">
                                     <div class="personal-info-section bottom-unrounded" data-field-container="full_name">
@@ -164,7 +165,7 @@
                                         <div id="view-status-chip-container" data-field-view="status">
                                             <div id="view-status" style="font-size: 1rem; pointer-events: none;"></div>
                                         </div>
-                                        <div id="edit-status-controls" class="hidden" style="margin-top: 0.25em;">
+                                        <div id="edit-status-controls" class="hidden center-align row" style="margin-top: 0.25em;">
                                             <div class="field label border no-margin" style="width: fit-content;">
                                                 <div id="detail-status-edit-btn" data-ui="#detail-status-edit-menu" style="font-size: 1rem;">
                                                     <span id="detail-status-edit-btn-text">Select Status</span>
