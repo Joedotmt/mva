@@ -401,21 +401,46 @@ async function setMemberDetailsMode(isEdit)
 
     const dataToDisplay = !isEdit && originalVeteranDataForEdit ? originalVeteranDataForEdit : veteran;
 
-    if (dataToDisplay)
+
+    if (false)//(document.startViewTransition)
     {
-        await populateMemberDetailsForm(dataToDisplay, isEdit); // This now handles the dynamic fields
+        document.startViewTransition(async () =>
+        {
+
+            if (dataToDisplay)
+            {
+                await populateMemberDetailsForm(dataToDisplay, isEdit); // This now handles the dynamic fields
+            }
+            if (memberDetailsEditBtn) memberDetailsEditBtn.classList.toggle('hidden', isEdit);
+            if (memberDetailsSaveBtn)
+            {
+                memberDetailsSaveBtn.classList.toggle('hidden', !isEdit);
+                memberDetailsSaveBtn.innerHTML = '<span>Save Changes</span><i>save</i>';
+                memberDetailsSaveBtn.classList.remove('success');
+                memberDetailsSaveBtn.disabled = false;
+            }
+            if (memberDetailsCancelEditBtn) memberDetailsCancelEditBtn.classList.toggle('hidden', !isEdit);
+            // Delete button visibility is handled within populateMemberDetailsForm via admin-actions-section
+        });
+    } else
+    {
+        if (dataToDisplay)
+        {
+            await populateMemberDetailsForm(dataToDisplay, isEdit); // This now handles the dynamic fields
+        }
+
+        if (memberDetailsEditBtn) memberDetailsEditBtn.classList.toggle('hidden', isEdit);
+        if (memberDetailsSaveBtn)
+        {
+            memberDetailsSaveBtn.classList.toggle('hidden', !isEdit);
+            memberDetailsSaveBtn.innerHTML = '<span>Save Changes</span><i>save</i>';
+            memberDetailsSaveBtn.classList.remove('success');
+            memberDetailsSaveBtn.disabled = false;
+        }
+        if (memberDetailsCancelEditBtn) memberDetailsCancelEditBtn.classList.toggle('hidden', !isEdit);
+        // Delete button visibility is handled within populateMemberDetailsForm via admin-actions-section
     }
 
-    if (memberDetailsEditBtn) memberDetailsEditBtn.classList.toggle('hidden', isEdit);
-    if (memberDetailsSaveBtn)
-    {
-        memberDetailsSaveBtn.classList.toggle('hidden', !isEdit);
-        memberDetailsSaveBtn.innerHTML = '<span>Save Changes</span><i>save</i>';
-        memberDetailsSaveBtn.classList.remove('success');
-        memberDetailsSaveBtn.disabled = false;
-    }
-    if (memberDetailsCancelEditBtn) memberDetailsCancelEditBtn.classList.toggle('hidden', !isEdit);
-    // Delete button visibility is handled within populateMemberDetailsForm via admin-actions-section
 }
 
 

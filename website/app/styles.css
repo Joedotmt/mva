@@ -161,6 +161,8 @@ dialog:is(.active, [open]):not(.right)
     border-top: 1px solid var(--outline-variant);
     background-color: var(--surface-container-low);
     flex-shrink: 0;
+    z-index: 2;
+    view-transition-name: drawerfooter;
 }
 
 .close-details-btn
@@ -171,6 +173,47 @@ dialog:is(.active, [open]):not(.right)
 #details-panel-content
 {
     padding: 2em;
+    view-transition-name: details-panel-content;
+}
+
+@keyframes details-panel-content-fade-in
+{
+    0%
+    {
+        opacity: 0;
+        transform: scale(0.99);
+    }
+
+    100%
+    {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes details-panel-content-fade-out
+{
+    0%
+    {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    100%
+    {
+        opacity: 0;
+        transform: scale(0.99);
+    }
+}
+
+::view-transition-old(details-panel-content)
+{
+    animation: details-panel-content-fade-out 0.3s forwards;
+}
+
+::view-transition-new(details-panel-content)
+{
+    animation: details-panel-content-fade-in 0.5s forwards;
 }
 
 header
