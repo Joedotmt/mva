@@ -894,6 +894,34 @@ async function filterAndDisplayVeterans()
     const statusValue = currentStatusFilterValue;
     const searchTerm = searchInput ? searchInput.value.toLowerCase() : "";
 
+    if (statusValue === "zero-owed-members")
+    {
+        // Filter for members who owe 0 euros and are not archived
+        // We need to check paymentInfo for each veteran
+        const filtered = [];
+        for (const veteran of allVeterans)
+        {
+            if (veteran.status === "Member")
+            {
+                const paymentInfo = await calculateAmountOwedAndOverdueStatus(veteran.id, veteran.status, veteran.created);
+                if (paymentInfo.amountOwed === 0)
+                {
+                    filtered.push(veteran);
+                }
+            }
+        }
+        displayedVeterans = filtered.filter(veteran =>
+        {
+            // Also apply search filter
+            const nameMatch = veteran.full_name && veteran.full_name.toLowerCase().includes(searchTerm);
+            const idCardMatch = veteran.id_card_number && veteran.id_card_number.toLowerCase().includes(searchTerm);
+            const emailMatch = veteran.email && veteran.email.toLowerCase().includes(searchTerm);
+            return !searchTerm || nameMatch || idCardMatch || emailMatch;
+        });
+        await renderVeteransList(displayedVeterans);
+        return;
+    }
+
     displayedVeterans = allVeterans.filter(veteran =>
     {
         const matchesStatus = !statusValue || veteran.status === statusValue;
