@@ -684,7 +684,7 @@ async function initAdminPage()
         pb = new PocketBase(POCKETBASE_URL);
         if (!pb.authStore.isValid || !pb.authStore.model)
         {
-            window.location.href = '/';
+            window.location.href = '/mva';
             return;
         }
         const user = pb.authStore.model;
@@ -701,7 +701,7 @@ async function initAdminPage()
         console.error("Initialization error:", error);
         showMessage("Error", "Failed to initialize admin panel. Please try logging in again.");
         if (pb) pb.authStore.clear();
-        window.location.href = '/';
+        window.location.href = '/mva';
     }
 }
 
