@@ -1034,4 +1034,5 @@ document.addEventListener('DOMContentLoaded', () =>
             if (closedSomething) event.preventDefault();
         }
     });
+    document.getElementById("pb_admin_button").href = POCKETBASE_URL;
 });
