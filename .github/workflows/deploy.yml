@@ -11,16 +11,24 @@ permissions:
   id-token: write
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Upload static site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: website/app  # Deploy just the content
+          path: website/app  # <-- Your custom output folder
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages  # <-- REQUIRED or deployment will fail
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
