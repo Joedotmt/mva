@@ -33,21 +33,13 @@ let pb = null; // Will be initialized in DOMContentLoaded
 let loggedInVeteran = null;
 
 // --- Main Profile Logic ---
-
-/**
- * Loads and displays the logged-in veteran's profile data.
- * Uses shared functions: showLoading, hideLoading, showMessage, formatDate, formatCurrency,
- * getStatusBadgeClass, calculateAmountOwedAndOverdueStatus, getFirstPaymentTransaction.
- * Assumes 'pb' is initialized and 'loggedInVeteran' is set if auth is valid.
- */
 async function loadProfileData()
 {
-    if (!pb.authStore.isValid || !pb.authStore.model || pb.authStore.model.collectionName !== VETERANS_COLLECTION || !loggedInVeteran)
+    if (!pb || !pb.authStore.isValid || !pb.authStore.model || pb.authStore.model.collectionName !== VETERANS_COLLECTION || !loggedInVeteran)
     {
-        console.log([!pb.authStore.isValid, !pb.authStore.model, pb.authStore.model.collectionName !== VETERANS_COLLECTION, !loggedInVeteran]);
-        //if (pb) pb.authStore.clear(); // Clear potentially invalid store
-        //window.location.href = '/mva'; // Redirect to login/home
-        //return;
+        if (pb) pb.authStore.clear(); // Clear potentially invalid store
+        window.location.href = '/mva'; // Redirect to login/home
+        return;
     }
     loggedInVeteran = pb.authStore.model;
     showLoading();
