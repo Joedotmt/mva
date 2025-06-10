@@ -32,6 +32,52 @@ const themeSwitcherBtn = document.getElementById('theme-switcher');
 let pb = null; // Will be initialized in DOMContentLoaded
 let loggedInVeteran = null;
 
+// Initialize PocketBase client - POCKETBASE_URL is from shared.js
+pb = new PocketBase(POCKETBASE_URL);
+
+const currentYearEl = document.getElementById('current-year');
+if (currentYearEl) currentYearEl.textContent = new Date().getFullYear();
+
+// Apply saved theme or default to light
+const savedTheme = localStorage.getItem('theme');
+if (themeSwitcherBtn)
+{ // Ensure button exists before trying to set its content
+    if (savedTheme === 'dark')
+    {
+        document.body.classList.remove('light');
+        document.body.classList.add('dark');
+        themeSwitcherBtn.innerHTML = '<i>dark_mode</i>';
+    } else
+    {
+        document.body.classList.remove('dark'); // Ensure light is default if no saved theme or saved is light
+        document.body.classList.add('light');
+        themeSwitcherBtn.innerHTML = '<i>light_mode</i>';
+    }
+}
+
+
+if (pb.authStore.isValid && pb.authStore.model && pb.authStore.model.collectionName === VETERANS_COLLECTION)
+{ // VETERANS_COLLECTION from shared.js
+    loadProfileData();
+} else
+{
+    // If not a valid veteran session, clear and redirect.
+    pb.authStore.clear();
+    window.location.href = '/mva'; // Redirect to login/home page
+}
+
+if (logoutBtn) logoutBtn.addEventListener('click', handleLogout); // handleLogout is from shared.js
+if (themeSwitcherBtn) themeSwitcherBtn.addEventListener('click', toggleTheme);
+
+// Initialize BeerCSS components like modals, if ui() is available
+if (typeof ui === 'function')
+{
+    ui();
+} else
+{
+    console.warn("BeerCSS ui() function not found. Some components might not initialize correctly.");
+}
+
 // --- Main Profile Logic ---
 async function loadProfileData()
 {
@@ -228,54 +274,3 @@ function toggleTheme()
     }
     localStorage.setItem('theme', body.classList.contains('dark') ? 'dark' : 'light');
 }
-
-
-// --- Initialization ---
-document.addEventListener('DOMContentLoaded', () =>
-{
-    // Initialize PocketBase client - POCKETBASE_URL is from shared.js
-    pb = new PocketBase(POCKETBASE_URL);
-
-    const currentYearEl = document.getElementById('current-year');
-    if (currentYearEl) currentYearEl.textContent = new Date().getFullYear();
-
-    // Apply saved theme or default to light
-    const savedTheme = localStorage.getItem('theme');
-    if (themeSwitcherBtn)
-    { // Ensure button exists before trying to set its content
-        if (savedTheme === 'dark')
-        {
-            document.body.classList.remove('light');
-            document.body.classList.add('dark');
-            themeSwitcherBtn.innerHTML = '<i>dark_mode</i>';
-        } else
-        {
-            document.body.classList.remove('dark'); // Ensure light is default if no saved theme or saved is light
-            document.body.classList.add('light');
-            themeSwitcherBtn.innerHTML = '<i>light_mode</i>';
-        }
-    }
-
-
-    if (pb.authStore.isValid && pb.authStore.model && pb.authStore.model.collectionName === VETERANS_COLLECTION)
-    { // VETERANS_COLLECTION from shared.js
-        loadProfileData();
-    } else
-    {
-        // If not a valid veteran session, clear and redirect.
-        pb.authStore.clear();
-        window.location.href = '/mva'; // Redirect to login/home page
-    }
-
-    if (logoutBtn) logoutBtn.addEventListener('click', handleLogout); // handleLogout is from shared.js
-    if (themeSwitcherBtn) themeSwitcherBtn.addEventListener('click', toggleTheme);
-
-    // Initialize BeerCSS components like modals, if ui() is available
-    if (typeof ui === 'function')
-    {
-        ui();
-    } else
-    {
-        console.warn("BeerCSS ui() function not found. Some components might not initialize correctly.");
-    }
-});
