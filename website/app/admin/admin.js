@@ -836,20 +836,6 @@ async function renderVeteransList(veteransToRender)
 
         if (veteran.status === 'Member')
         {
-            const recordPaymentBtn = document.createElement('button');
-            recordPaymentBtn.innerHTML = '<i>payment</i> Record Pay';
-            recordPaymentBtn.className = 'responsive action-button';
-            if (paymentInfo.amountOwed > 0)
-            {
-                recordPaymentBtn.onclick = (e) => { e.stopPropagation(); confirmRecordPayment(veteran.id, veteran.full_name); };
-            } else
-            {
-                recordPaymentBtn.disabled = true;
-                recordPaymentBtn.title = "No payment currently due.";
-                recordPaymentBtn.classList.add('tooltip');
-            }
-            actionsNav.appendChild(recordPaymentBtn);
-
             const archiveMemberBtn = document.createElement('button');
             archiveMemberBtn.innerHTML = '<i>archive</i> Archive';
             archiveMemberBtn.className = 'responsive action-button warning-button';
@@ -954,61 +940,6 @@ async function confirmUpdateVeteranStatus(veteranId, newStatus, title, text)
             }
         }
     );
-}
-
-async function confirmRecordPayment(veteranId, veteranName)
-{
-    showConfirmActionModal
-        (
-            `Confirm Payment`,
-            `Record a payment of ${formatCurrency(MEMBERSHIP_FEE)} for ${veteranName || 'this veteran'}?`,
-            async () =>
-            {
-                showLoading();
-                try
-                {
-                    await pb.collection(TRANSACTIONS_COLLECTION).create({
-                        veteran: veteranId,
-                        amount_paid: MEMBERSHIP_FEE,
-                    });
-                    // Invalidate cache for this veteran's last payment
-                    // and all transactions, and first payment
-                    if (typeof lastPaymentCache !== 'undefined') lastPaymentCache.delete(veteranId);
-                    if (typeof firstPaymentCache !== 'undefined') firstPaymentCache.delete(veteranId);
-                    if (typeof allTransactionsCache !== 'undefined') allTransactionsCache.delete(veteranId);
-
-
-
-                    const veteran = allVeterans.find(v => v.id === veteranId);
-                    if (veteran && veteran.status === 'Application')
-                    {
-                        await pb.collection(VETERANS_COLLECTION).update(veteranId, { status: 'Member' });
-                    }
-
-                    await fetchVeterans(); // Refresh list and drawer data
-
-                    if (currentEditingVeteranId === veteranId && memberDetailsDrawer && (memberDetailsDrawer.open || memberDetailsDrawer.classList.contains('active')))
-                    {
-                        const updatedVeteranData = allVeterans.find(v => v.id === veteranId);
-                        if (updatedVeteranData)
-                        {
-                            originalVeteranDataForEdit = { ...updatedVeteranData };
-                            await populateMemberDetailsForm(updatedVeteranData, isMemberDetailsEditMode);
-                        }
-                    }
-                    showMessage("Payment Recorded", `Payment of ${formatCurrency(MEMBERSHIP_FEE)} recorded for ${veteranName || 'Veteran'}.`);
-                }
-                catch (error)
-                {
-                    console.error("Error recording payment:", error);
-                    showMessage("Payment Error", `Failed to record payment for ${veteranName || 'Veteran'}. ${error.data?.message || error.message}`);
-                }
-                finally
-                {
-                    hideLoading();
-                }
-            }
-        );
 }
 
 // --- Event Listeners & Initialization ---
