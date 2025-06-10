@@ -37,9 +37,10 @@ async function loadProfileData()
 {
     if (!pb || !pb.authStore.isValid || !pb.authStore.model || pb.authStore.model.collectionName !== VETERANS_COLLECTION || !loggedInVeteran)
     {
-        if (pb) pb.authStore.clear(); // Clear potentially invalid store
-        window.location.href = '/mva'; // Redirect to login/home
-        return;
+        console.log([!pb, !pb.authStore.isValid, !pb.authStore.model, pb.authStore.model.collectionName !== VETERANS_COLLECTION, !loggedInVeteran]);
+        //if (pb) pb.authStore.clear(); // Clear potentially invalid store
+        //window.location.href = '/mva'; // Redirect to login/home
+        //return;
     }
     loggedInVeteran = pb.authStore.model;
     showLoading();
