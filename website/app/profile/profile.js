@@ -44,7 +44,7 @@ async function loadProfileData()
 {
     if (!pb.authStore.isValid || !pb.authStore.model || pb.authStore.model.collectionName !== VETERANS_COLLECTION || !loggedInVeteran)
     {
-        console.log("eeee");
+        console.log([!pb.authStore.isValid, !pb.authStore.model, pb.authStore.model.collectionName !== VETERANS_COLLECTION, !loggedInVeteran]);
         //if (pb) pb.authStore.clear(); // Clear potentially invalid store
         //window.location.href = '/mva'; // Redirect to login/home
         //return;
