@@ -239,7 +239,7 @@ function toggleTheme()
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () =>
 {
-    // Initialize PocketBase client - POCKETBASE_URL is from shared_app.js
+    // Initialize PocketBase client - POCKETBASE_URL is from shared.js
     pb = new PocketBase(POCKETBASE_URL);
 
     const currentYearEl = document.getElementById('current-year');
@@ -264,7 +264,7 @@ document.addEventListener('DOMContentLoaded', () =>
 
 
     if (pb.authStore.isValid && pb.authStore.model && pb.authStore.model.collectionName === VETERANS_COLLECTION)
-    { // VETERANS_COLLECTION from shared_app.js
+    { // VETERANS_COLLECTION from shared.js
         loadProfileData();
     } else
     {
@@ -273,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () =>
         window.location.href = '/'; // Redirect to login/home page
     }
 
-    if (logoutBtn) logoutBtn.addEventListener('click', handleLogout); // handleLogout is from shared_app.js
+    if (logoutBtn) logoutBtn.addEventListener('click', handleLogout); // handleLogout is from shared.js
     if (themeSwitcherBtn) themeSwitcherBtn.addEventListener('click', toggleTheme);
 
     // Initialize BeerCSS components like modals, if ui() is available
