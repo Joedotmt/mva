@@ -659,19 +659,19 @@ function redirectToDashboard(role, collectionName)
 
     if (collectionName === MANAGERS_COLLECTION && role === 'admin')
     {
-        window.location.href = 'admin.html';
+        window.location.href = 'admin';
     } else if (collectionName === VETERANS_COLLECTION && role === 'veteran')
     {
-        window.location.href = 'profile.html';
+        window.location.href = 'profile';
     }
     else if (role === 'admin')
     {
-        console.warn("Redirecting to admin.html based on role only, collection was:", collectionName);
-        window.location.href = 'admin.html';
+        console.warn("Redirecting to /admin based on role only, collection was:", collectionName);
+        window.location.href = 'admin';
     } else if (role === 'veteran')
     {
-        console.warn("Redirecting to profile.html based on role only, collection was:", collectionName);
-        window.location.href = 'profile.html';
+        console.warn("Redirecting to /profile based on role only, collection was:", collectionName);
+        window.location.href = 'profile';
     }
     else
     {
