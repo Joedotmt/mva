@@ -45,7 +45,7 @@ async function loadProfileData()
     if (!pb || !pb.authStore.isValid || !pb.authStore.model || pb.authStore.model.collectionName !== VETERANS_COLLECTION || !loggedInVeteran)
     {
         if (pb) pb.authStore.clear(); // Clear potentially invalid store
-        window.location.href = '../'; // Redirect to login/home
+        window.location.href = '/mva'; // Redirect to login/home
         return;
     }
     loggedInVeteran = pb.authStore.model;
@@ -209,7 +209,7 @@ async function loadProfileData()
         showMessage("Error", "Could not load your profile data. Please try logging in again or contact support if the issue persists."); // Uses shared function
         // Consider if pb.authStore.clear() and redirect is appropriate here, or allow retry.
         // pb.authStore.clear();
-        // window.location.href = '../';
+        // window.location.href = '/mva';
     } finally
     {
         hideLoading(); // Uses shared function
@@ -270,7 +270,7 @@ document.addEventListener('DOMContentLoaded', () =>
     {
         // If not a valid veteran session, clear and redirect.
         pb.authStore.clear();
-        window.location.href = '../'; // Redirect to login/home page
+        window.location.href = '/mva'; // Redirect to login/home page
     }
 
     if (logoutBtn) logoutBtn.addEventListener('click', handleLogout); // handleLogout is from shared.js
