@@ -705,8 +705,9 @@ async function initAdminPage()
     }
 }
 
-async function fetchVeterans()
+async function fetchVeterans(filter = "")
 {
+    console.log("FETCHING VETERANS");
     showLoading();
     if (veteransListContainerEl && veteransListInitialLoadingEl && veteransListContainerEl.contains(veteransListInitialLoadingEl))
     {
@@ -718,11 +719,12 @@ async function fetchVeterans()
 
     try
     {
-        const records = await pb.collection(VETERANS_COLLECTION).getFullList({
-            sort: '-created',
-        });
+        const options = { sort: '-created' };
+        if (filter) options.filter = filter;
+        const records = await pb.collection(VETERANS_COLLECTION).getFullList(options);
         allVeterans = records;
-        await filterAndDisplayVeterans();
+        displayedVeterans = records;
+        await renderVeteransList(displayedVeterans);
 
         if (currentEditingVeteranId && memberDetailsDrawer && (memberDetailsDrawer.open || memberDetailsDrawer.classList.contains('active')))
         {
@@ -892,12 +894,14 @@ async function renderVeteransList(veteransToRender)
 async function filterAndDisplayVeterans()
 {
     const statusValue = currentStatusFilterValue;
-    const searchTerm = searchInput ? searchInput.value.toLowerCase() : "";
+    const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : "";
+
+    let filter = "";
 
     if (statusValue === "zero-owed-members")
     {
-        // Filter for members who owe 0 euros and are not archived
-        // We need to check paymentInfo for each veteran
+        // This filter cannot be done purely in PocketBase if amountOwed is calculated on the fly.
+        // So, fallback to JS for this special case.
         const filtered = [];
         for (const veteran of allVeterans)
         {
@@ -912,7 +916,6 @@ async function filterAndDisplayVeterans()
         }
         displayedVeterans = filtered.filter(veteran =>
         {
-            // Also apply search filter
             const nameMatch = veteran.full_name && veteran.full_name.toLowerCase().includes(searchTerm);
             const idCardMatch = veteran.id_card_number && veteran.id_card_number.toLowerCase().includes(searchTerm);
             const emailMatch = veteran.email && veteran.email.toLowerCase().includes(searchTerm);
@@ -922,16 +925,20 @@ async function filterAndDisplayVeterans()
         return;
     }
 
-    displayedVeterans = allVeterans.filter(veteran =>
+    // Build PocketBase filter string
+    const filters = [];
+    if (statusValue)
     {
-        const matchesStatus = !statusValue || veteran.status === statusValue;
-        const nameMatch = veteran.full_name && veteran.full_name.toLowerCase().includes(searchTerm);
-        const idCardMatch = veteran.id_card_number && veteran.id_card_number.toLowerCase().includes(searchTerm);
-        const emailMatch = veteran.email && veteran.email.toLowerCase().includes(searchTerm);
-        const matchesSearch = !searchTerm || nameMatch || idCardMatch || emailMatch;
-        return matchesStatus && matchesSearch;
-    });
-    await renderVeteransList(displayedVeterans);
+        filters.push(`status = "${statusValue}"`);
+    }
+    if (searchTerm)
+    {
+        // PocketBase doesn't support OR in a single filter string, so we use parentheses and OR
+        filters.push(`(full_name ~ "${searchTerm}" || id_card_number ~ "${searchTerm}" || email ~ "${searchTerm}")`);
+    }
+    filter = filters.join(' && ');
+
+    await fetchVeterans(filter);
 }
 
 async function confirmUpdateVeteranStatus(veteranId, newStatus, title, text)
