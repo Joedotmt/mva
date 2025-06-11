@@ -838,6 +838,20 @@ async function renderVeteransList(veteransToRender)
 
         if (veteran.status === 'Member')
         {
+            const recordPaymentBtn = document.createElement('button');
+            recordPaymentBtn.innerHTML = '<i>payment</i> Record Pay';
+            recordPaymentBtn.className = 'responsive action-button';
+            if (paymentInfo.amountOwed > 0)
+            {
+                recordPaymentBtn.onclick = (e) => { e.stopPropagation(); confirmRecordPayment(veteran.id, veteran.full_name); };
+            } else
+            {
+                recordPaymentBtn.disabled = true;
+                recordPaymentBtn.title = "No payment currently due.";
+                recordPaymentBtn.classList.add('tooltip');
+            }
+            actionsNav.appendChild(recordPaymentBtn);
+
             const archiveMemberBtn = document.createElement('button');
             archiveMemberBtn.innerHTML = '<i>archive</i> Archive';
             archiveMemberBtn.className = 'responsive action-button warning-button';
