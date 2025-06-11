@@ -85,7 +85,7 @@ if (confirmActionConfirmBtn) {
             currentActionCallback();
         }
         if (confirmActionDialogEl && typeof ui === 'function') {
-            ui("#confirm-action-dialog").close();
+            ui("#confirm-action-dialog")
         }
         currentActionCallback = null;
     });
@@ -272,7 +272,6 @@ function setupRealtimeSubscriptions() {
             // Re-fetch all veterans to include the new one and maintain sort order
             // This is simpler than trying to insert into the sorted array
             await fetchVeterans();
-            showMessage("New Veteran", `A new veteran has been added: ${e.record.full_name || e.record.email}.`);
         } else if (e.action === 'update') {
             // Find and update the veteran in the local array
             const index = allVeterans.findIndex(v => v.id === e.record.id);
@@ -305,7 +304,7 @@ function setupRealtimeSubscriptions() {
             // If the deleted veteran's drawer is open, close it
             if (currentEditingVeteranId === e.record.id && memberDetailsDrawer && (memberDetailsDrawer.open || memberDetailsDrawer.classList.contains('active'))) {
                 console.log(`[Realtime] Closing drawer for deleted veteran ${e.record.id}`);
-                if (typeof ui === 'function') ui("#member-details-drawer").close();
+                if (typeof ui === 'function') ui("#member-details-drawer")
                 else memberDetailsDrawer.classList.remove('active');
                 // closeMemberDetailsPanelLogic will handle cleanup
             }
@@ -574,7 +573,7 @@ if (deleteVeteranBtn) {
                     }
                     await pb.collection(VETERANS_COLLECTION).delete(currentEditingVeteranId);
 
-                    if (memberDetailsDrawer && typeof ui === 'function') ui("#member-details-drawer").close();
+                    if (memberDetailsDrawer && typeof ui === 'function') ui("#member-details-drawer")
                     else if (memberDetailsDrawer) memberDetailsDrawer.classList.remove('active');
 
                     await fetchVeterans();
@@ -637,7 +636,7 @@ async function fetchVeterans(filter = "") {
                 originalVeteranDataForEdit = { ...stillCurrentVeteran };
                 await populateMemberDetailsForm(stillCurrentVeteran, isMemberDetailsEditMode); // Refresh drawer content
             } else {
-                if (typeof ui === 'function') ui("#member-details-drawer").close();
+                if (typeof ui === 'function') ui("#member-details-drawer")
                 else if (memberDetailsDrawer) memberDetailsDrawer.classList.remove('active');
             }
         }
@@ -859,7 +858,7 @@ async function filterAndDisplayVeterans() {
             const emailMatch = veteran.email && veteran.email.toLowerCase().includes(searchTerm);
             return !searchTerm || nameMatch || idCardMatch || emailMatch;
         });
-        await renderVeteransList(displayedVeterans);
+        await renderVeteransList(filtered);
         return;
     }
 

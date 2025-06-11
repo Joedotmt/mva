@@ -308,96 +308,102 @@ async function initPocketBase()
     }
 }
 
-
-// --- Core Authentication Logic ---
-// ... (handleSendOtpOrRegister, handleSubmitVeteranDetails, proceedWithFinalRegistrationAndOtp, handleVerifyOtp, redirectToDashboard remain the same) ...
-async function handleSendOtpOrRegister()
-{
+/**
+ * Handles the user authentication flow.
+ * 1. Validates the user's email address.
+ * 2. Calls the custom backend endpoint `/api/check-email` to see if the user already exists.
+ * 3. If the user exists, it sends them a One-Time Password (OTP) to log in.
+ * 4. If the user does not exist, it prompts them to register.
+ * This is much more efficient than the previous method of creating/deleting a temporary user.
+ */
+async function handleSendOtpOrRegister() {
+    // --- 1. Get and Validate Email ---
+    const emailInput = document.getElementById('email-input'); // Assuming you have an input with this ID
     const email = emailInput.value.trim().toLowerCase();
-    if (!email || !/^\S+@\S+\.\S+$/.test(email))
-    {
+
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
         showMessage("Input Error", "Please enter a valid email address.");
         return;
     }
-    showLoading();
-    emailForOtpProcess = email;
-    const authTarget = getAuthTarget();
-    const tempPassword = generateRandomPassword();
-    let tempUserCreatedId = null;
 
-    try
-    {
-        console.log(`Attempting to create temporary user in '${authTarget.collection}' for: ${emailForOtpProcess}`);
-        const tempUserData = {
-            "email": emailForOtpProcess,
-            "emailVisibility": true,
-            "full_name": "test", // Required by schema, but temporary
-            // ... other required fields with dummy data for temporary check
-            "full_address": "test",
-            "id_card_number": "test",
-            "phone_number": "test",
-            "next_of_kin_full_name": "test",
-            "next_of_kin_full_phone_number": "test",
-            "next_of_kin_relationship": "test",
-            "status": "Application",
-            "admin_note": "test",
-            "password": tempPassword,
-            "passwordConfirm": tempPassword
-        };
-        const newTempUser = await pb.collection(authTarget.collection).create(tempUserData);
-        tempUserCreatedId = newTempUser.id;
-        console.log(`Temporary user ${tempUserCreatedId} created in '${authTarget.collection}'. Email is NEW for this collection.`);
-        await pb.collection(authTarget.collection).delete(tempUserCreatedId);
-        console.log(`Temporary user ${tempUserCreatedId} deleted.`);
-        tempUserCreatedId = null;
-        showRegisterConfirmModal(emailForOtpProcess);
-    } catch (error)
-    {
-        if (error.status == 400) 
-        {
-            console.log(`User ${emailForOtpProcess} already exists in '${authTarget.collection}'. Sending OTP for login.`);
-            try
-            {
-                const result = await pb.collection(authTarget.collection).requestOTP(emailForOtpProcess);
-                if (result && result.otpId)
-                {
+    showLoading();
+    const authTarget = getAuthTarget(); // Gets collection info (e.g., 'veterans')
+    emailForOtpProcess = email; // Store email for later steps
+
+    try {
+        // --- 2. Check if Email Exists via Custom API Endpoint ---
+        console.log(`Checking if email '${email}' exists in '${authTarget.collection}'...`);
+        
+        // Use the fetch API to call your custom Go endpoint.
+        // Assumes 'pb.baseUrl' is accessible from your PocketBase JS SDK instance.
+        const response = await fetch(`${pb.baseUrl}/api/check-email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email }),
+        });
+
+        if (!response.ok) {
+            // Handle non-2xx responses from your API endpoint
+            const errorText = await response.text();
+            throw new Error(`API check failed with status ${response.status}: ${errorText}`);
+        }
+
+        const result = await response.json();
+        console.log(`Email check for '${email}' returned:`, result);
+
+        // --- 3. Handle Existing User (Send OTP) ---
+        if (result.exists) {
+            console.log(`User '${email}' exists. Requesting OTP for login.`);
+            try {
+                // CORRECT: Use requestOTP which returns an object with otpId, as per docs.
+                const otpRequestData = await pb.collection(authTarget.collection).requestOTP(email);
+                
+                if (otpRequestData && otpRequestData.otpId) {
+                    // Store the necessary context for when the user submits the OTP
                     otpRequestContext = {
-                        email: emailForOtpProcess,
+                        email: email,
                         collection: authTarget.collection,
-                        otpId: result.otpId,
+                        otpId: otpRequestData.otpId,
                         role: authTarget.role
                     };
-                    showOtpModal(emailForOtpProcess, false);
-                } else
-                {
-                    throw new Error("OTP request did not return an otpId.");
+                    console.log(`Successfully requested OTP for existing user. OTP ID: ${otpRequestData.otpId}`);
+                    showOtpModal(email, false); // Show the modal for the user to enter the OTP
+                } else {
+                    throw new Error("OTP request did not return the expected data (otpId).");
                 }
-            } catch (otpError)
-            {
-                console.error(`Error sending OTP for existing user ${emailForOtpProcess}:`, otpError);
-                showMessage("OTP Error", `Failed to send OTP for ${authTarget.role}. ${getPocketBaseErrorDetails(otpError)}`);
+
+            } catch (otpError) {
+                console.error(`Error sending OTP for existing user '${email}':`, otpError);
+                showMessage("OTP Error", `Failed to send login OTP for ${authTarget.role}. ${getPocketBaseErrorDetails(otpError)}`);
             }
-        } else
-        {
-            console.error(`Error during temp user check for ${emailForOtpProcess} in ${authTarget.collection}:`, error);
-            showMessage("System Error", `An unexpected error occurred while checking email with ${authTarget.collection}. ${getPocketBaseErrorDetails(error)}`);
+        } 
+        // --- 4. Handle New User (Show Registration) ---
+        else {
+            console.log(`Email '${email}' is new. Showing registration confirmation.`);
+            showRegisterConfirmModal(email);
         }
-    } finally
-    {
-        if (tempUserCreatedId)
-        {
-            try
-            {
-                await pb.collection(authTarget.collection).delete(tempUserCreatedId);
-                console.log(`Final cleanup of temp user ${tempUserCreatedId} successful.`);
-            } catch (e)
-            {
-                console.error("Final cleanup of temp user failed", e);
-            }
-        }
+
+    } catch (error) {
+        // --- 5. Handle General Errors ---
+        console.error(`An unexpected error occurred during the email check process for '${email}':`, error);
+        showMessage("System Error", `An unexpected error occurred. Please try again. ${error.message}`);
+    } finally {
+        // --- 6. Clean Up ---
         hideLoading();
     }
 }
+
+// NOTE: You will need to have these helper functions defined elsewhere in your code:
+// - showMessage(title, message) -> Displays a message to the user
+// - showLoading() / hideLoading() -> Manages a loading indicator
+// - getAuthTarget() -> Returns an object like { collection: 'veterans', role: 'Veteran' }
+// - showOtpModal(email, isRegistering) -> Shows the modal for OTP input. This modal's submit logic
+//   will now need to use otpRequestContext.otpId and the user's input to call pb.collection().authWithOTP().
+// - showRegisterConfirmModal(email) -> Shows the modal to confirm registration
+// - getPocketBaseErrorDetails(error) -> Parses a PocketBase error for user display
+// - pb -> Your initialized PocketBase JavaScript SDK instance
+// - emailForOtpProcess -> A global or state variable to hold the email
+// - otpRequestContext -> A global or state variable to hold OTP context { email, collection, otpId, role }
 
 veteranDetailsForm.addEventListener('submit', async function (event)
 {
