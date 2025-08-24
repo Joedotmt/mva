@@ -27,6 +27,11 @@ const transactionHistoryBody = document.getElementById('transaction-history-body
 const applicationStatusMessageDiv = document.getElementById('application-status-message');
 const logoutBtn = document.getElementById('logout-btn');
 const themeSwitcherBtn = document.getElementById('theme-switcher');
+const deleteAccountBtn = document.getElementById('delete-account-btn');
+const deleteConfirmDialog = document.getElementById('delete-confirm-dialog');
+const deleteConfirmBtn = document.getElementById('delete-confirm-btn');
+const deleteConfirmCancelBtn = document.getElementById('delete-confirm-cancel-btn');
+const deleteConfirmInput = document.getElementById('delete-confirm-input');
 
 // --- PocketBase Client & State ---
 let pb = null; // Will be initialized in DOMContentLoaded
@@ -68,6 +73,24 @@ if (pb.authStore.isValid && pb.authStore.model && pb.authStore.model.collectionN
 
 if (logoutBtn) logoutBtn.addEventListener('click', handleLogout); // handleLogout is from shared.js
 if (themeSwitcherBtn) themeSwitcherBtn.addEventListener('click', toggleTheme);
+if (deleteAccountBtn) {
+    deleteAccountBtn.addEventListener('click', () => {
+        // Reset dialog state when opening
+        if (deleteConfirmInput) deleteConfirmInput.value = '';
+        if (deleteConfirmBtn) deleteConfirmBtn.disabled = true;
+        ui('#delete-confirm-dialog');
+    });
+}
+if (deleteConfirmCancelBtn) deleteConfirmCancelBtn.addEventListener('click', () => ui('#delete-confirm-dialog'));
+if (deleteConfirmBtn) deleteConfirmBtn.addEventListener('click', handleDeleteAccount);
+if (deleteConfirmInput) {
+    deleteConfirmInput.addEventListener('input', () => {
+        if (deleteConfirmBtn) {
+            deleteConfirmBtn.disabled = deleteConfirmInput.value !== 'delete account';
+        }
+    });
+}
+
 
 // Initialize BeerCSS components like modals, if ui() is available
 if (typeof ui === 'function')
@@ -246,6 +269,32 @@ async function loadProfileData()
     } finally
     {
         hideLoading(); // Uses shared function
+    }
+}
+
+/**
+ * Handles the permanent deletion of the user's account.
+ */
+async function handleDeleteAccount() {
+    if (!loggedInVeteran || !loggedInVeteran.id) {
+        showMessage("Error", "Could not identify user to delete.");
+        return;
+    }
+
+    ui('#delete-confirm-dialog'); // Close dialog
+    showLoading();
+
+    try {
+        await pb.collection(VETERANS_COLLECTION).delete(loggedInVeteran.id);
+        showMessage("Success", "Your account has been permanently deleted. You will now be logged out.", () => {
+            pb.authStore.clear();
+            window.location.href = '/mva';
+        });
+    } catch (error) {
+        console.error("Error deleting account:", error);
+        showMessage("Deletion Failed", "There was an error deleting your account. Please contact support.");
+    } finally {
+        hideLoading();
     }
 }
 

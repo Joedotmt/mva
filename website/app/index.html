@@ -1,20 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MVA Login</title>
 
-    <link rel="icon" href="https://raw.githubusercontent.com/Joedotmt/mva/f57acb904a89a49a0afde957145b86855be5a706/branding/Logo%20No%20Text%20latest.svg">
+    <link rel="icon"
+        href="https://raw.githubusercontent.com/Joedotmt/mva/f57acb904a89a49a0afde957145b86855be5a706/branding/Logo%20No%20Text%20latest.svg">
 
     <link href="https://cdn.jsdelivr.net/npm/beercss@3.11.11/dist/cdn/beer.min.css" rel="stylesheet" />
     <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.11.11/dist/cdn/beer.min.js"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
+    <script type="module"
+        src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
 
     <script src="https://unpkg.com/pocketbase/dist/pocketbase.umd.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap"
+        rel="stylesheet">
 
     <link href="styles.css" rel="stylesheet" />
     <link href="theme.css" rel="stylesheet" />
@@ -23,7 +28,8 @@
             font-family: 'Roboto', 'Inter', sans-serif;
             display: flex;
             flex-direction: column;
-            width: 100%;
+            width: 100vw;
+            min-width: 0;
         }
 
         main {
@@ -32,10 +38,55 @@
 
         .main-content {
             flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .hidden {
             display: none !important;
+        }
+
+        #wizard-container {
+            width: calc(100vw - 1em);
+            max-width: 500px;
+            margin: 0;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 64px - 2em);
+            /* Changed */
+            max-height: 700px;
+            /* Changed */
+            background-color: var(--surface);
+        }
+
+        #wizard-content {
+            flex-grow: 1;
+            overflow: hidden;
+            /* Changed */
+            position: relative;
+            min-height: 0;
+        }
+
+        #wizard-steps {
+            display: flex;
+            height: 100%;
+            transition: transform 500ms ease-in-out;
+            min-height: 0;
+        }
+
+        .wizard-step {
+            min-width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            opacity: 1;
+            transition: opacity 500ms ease-in-out;
+            overflow-y: auto;
+            min-height: 0;
+            -webkit-overflow-scrolling: touch;
+            padding: 1.5rem;
+            /* Added */
         }
 
         .auth-card-custom-width {
@@ -58,6 +109,7 @@
             color: var(--error);
             font-size: 0.8rem;
             margin-top: 0.25rem;
+            margin-bottom: 1rem;
         }
 
         .modal-overlay {
@@ -69,6 +121,20 @@
             justify-content: center;
             z-index: 1000;
             padding: 1rem;
+        }
+
+        #loading-indicator {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+        }
+
+        #message-modal {
+            z-index: 1002;
         }
 
         .modal-content-custom {
@@ -90,6 +156,8 @@
 
         header {
             background-color: var(--primary-container) !important;
+            max-height: 64px !important;
+            min-height: 64px !important;
         }
 
         .modal-body-custom {
@@ -124,7 +192,7 @@
             display: flex;
             align-items: center;
             text-align: center;
-            margin: 1.5rem 0;
+            margin: 1rem 0;
         }
 
         .divider-container hr {
@@ -148,172 +216,659 @@
         }
 
         main {
-            padding: 0 !important;
+            padding: 1em !important;
+            /* Changed */
+        }
+
+        .wizard-step-content {
+            background-color: var(--surface);
+            padding: 0;
+            /* Changed */
+        }
+
+        #wizard-actions {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--outline-variant);
+            background-color: var(--surface);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            height: 70px;
+        }
+
+        /* --- ADDED: make flex children able to shrink so inner overflow works (fix scrolling) --- */
+        #wizard-content {
+            /* ...existing code... */
+            min-height: 0;
+        }
+
+        #wizard-steps {
+            /* ...existing code... */
+            min-height: 0;
+        }
+
+        .wizard-step {
+            /* ...existing code... */
+            min-height: 0;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* --- ADDED: visual/interaction helper for inactive steps --- */
+        .wizard-step.step-inactive {
+            pointer-events: none;
+            user-select: none;
         }
     </style>
 </head>
+
 <body class="theme light">
-    <div style="overflow: hidden; overflow-x: auto; width: 100dvw;">
-        <div style="min-width: max-content;">
-            <div id="loading-indicator" class="hidden">
-                <progress class="circle large"></progress>
+
+    <div id="loading-indicator" class="hidden">
+        <progress class="circle large"></progress>
+    </div>
+
+    <!-- Google Registration Confirmation Modal -->
+    <!-- This modal is unused in the script and will be removed. -->
+
+    <!-- Message Modal -->
+    <div id="message-modal" class="modal-overlay hidden">
+        <div class="modal-content-custom card rounded large-padding medium-elevate">
+            <h5 id="message-modal-title" class="modal-header-custom">Message</h5>
+            <p id="message-modal-text" class="modal-body-custom"></p>
+            <div class="modal-actions-custom">
+                <button onclick="hideMessageModal()" class="primary round">OK</button>
             </div>
-
-            <!-- Google Registration Confirmation Modal -->
-            <div id="google-register-confirm-modal" class="modal-overlay hidden">
-                <div class="modal-content-custom card rounded large-padding medium-elevate">
-                    <h5 class="modal-header-custom">Confirm Account Creation</h5>
-                    <p class="modal-body-custom">
-                        No MVA account is currently linked to your Google profile: <span id="google-email-display" class="bold"></span> for the selected role.
-                    </p>
-                    <p class="modal-body-custom" style="margin-top: 1rem;">
-                        Do you want to create a new <span id="google-role-display" class="bold"></span> account?
-                    </p>
-                    <div class="modal-actions-custom" style="margin-top: 1.5rem;">
-                        <button id="cancel-google-register-btn" class="tertiary round no-margin">Cancel</button>
-                        <button id="confirm-google-register-btn" class="primary round">Yes, Create Account</button>
-                    </div>
-                </div>
-            </div>
-
-
-            <div id="message-modal" class="modal-overlay hidden">
-                <div class="modal-content-custom card rounded large-padding medium-elevate">
-                    <h5 id="message-modal-title" class="modal-header-custom">Message</h5>
-                    <p id="message-modal-text" class="modal-body-custom"></p>
-                    <div class="modal-actions-custom">
-                        <button onclick="hideMessageModal()" class="primary round">OK</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="otp-modal" class="modal-overlay hidden">
-                <div class="modal-content-custom card rounded large-padding medium-elevate">
-                    <h5 class="modal-header-custom">Enter code</h5>
-                    <div id="otp-modal-message" class="modal-body-custom">
-                        A code has been sent to <span id="otp-email-display" class="bold">your email</span>. Please enter it below.
-                    </div>
-                    <div class="field border large margin round"> <input type="text" id="otp-code" name="otp-code" placeholder="------" maxlength="6" class="center-align" style="letter-spacing: 0.5em;">
-                        <label for="otp-code" class="sr-only">One time code</label>
-                    </div>
-                    <div class="modal-actions-custom">
-                        <button onclick="cancelOtpFlow()" class="tertiary round no-margin">Cancel</button>
-                        <button id="verify-otp-btn" class="primary round">Verify & Login</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="register-confirm-modal" class="modal-overlay hidden">
-                <div class="modal-content-custom card rounded large-padding medium-elevate">
-                    <h5 class="modal-header-custom">Create Account?</h5>
-                    <p class="modal-body-custom">
-                        No account found for <span id="register-email-display" class="bold">your email</span>.
-                        Would you like to create a new account?
-                    </p>
-                    <div class="modal-actions-custom">
-                        <button onclick="hideRegisterConfirmModal()" class="tertiary round no-margin">Cancel</button>
-                        <button id="confirm-register-btn" class="primary round">Yes, Create Account</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="veteran-details-modal" class="modal-overlay hidden">
-                <div class="modal-content-custom card rounded large-padding medium-elevate">
-                    <h5 class="modal-header-custom">Complete Your Profile</h5>
-                    <p class="modal-body-custom">Please provide your details to create an account. All fields are required.</p>
-                    <form id="veteran-details-form">
-                        <div class="field label border margin">
-                            <input type="text" id="detail-full_name" required>
-                            <label for="detail-full_name">Full Name</label>
-                        </div>
-                        <div class="field label border margin">
-                            <input type="text" id="detail-id_card_number" required>
-                            <label for="detail-id_card_number">ID Card Number</label>
-                        </div>
-                        <div class="field textarea label border margin">
-                            <textarea id="detail-full_address" rows="2" required></textarea>
-                            <label for="detail-full_address">Full Home Address</label>
-                        </div>
-                        <div class="field label border margin">
-                            <input type="tel" id="detail-phone_number" required>
-                            <label for="detail-phone_number">Phone Number</label>
-                        </div>
-
-                        <hr class="divider margin">
-                        <h6>Next of Kin Details</h6>
-                        <div class="field label border margin">
-                            <input type="text" id="detail-next_of_kin_full_name" required>
-                            <label for="detail-next_of_kin_full_name">Next of Kin Full Name</label>
-                        </div>
-                        <div class="field label border margin">
-                            <input type="tel" id="detail-next_of_kin_full_phone_number" required>
-                            <label for="detail-next_of_kin_full_phone_number">Next of Kin Phone Number</label>
-                        </div>
-                        <div class="field label border margin">
-                            <input type="text" id="detail-next_of_kin_relationship" required>
-                            <label for="detail-next_of_kin_relationship">Relationship to Next of Kin</label>
-                        </div>
-
-                        <div class="modal-actions-custom margin-top">
-                            <button type="button" onclick="hideVeteranDetailsModal(); cancelOtpFlow();" class="tertiary round no-margin">Cancel</button>
-                            <button type="submit" id="submit-veteran-details-btn" class="primary round">Submit and Sign In</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <header class="fixed responsive max">
-                <nav style="gap: 0;">
-                    <img src="https://raw.githubusercontent.com/Joedotmt/mva/f57acb904a89a49a0afde957145b86855be5a706/branding/Logo%20No%20Text%20latest.svg" alt="MVA Logo" style="height: 3rem; margin-right: 0.5rem;">
-                    <h5 class="max">Malta Veterans Association</h5>
-                    <div style="margin: auto;"></div>
-                    <button class="ripple">
-                        <span>Back to website</span>
-                        <i>language</i>
-                    </button>
-                </nav>
-            </header>
-
-            <main style="max-inline-size: 100%;" class="main-content responsive middle-align center-align">
-                <div class="auth-card-custom-width card round large-padding border" style="background-color: var(--surface);">
-                    <h4 class="center-align">Member Portal</h4>
-                    <p class="center-align secondary-text medium-margin-bottom">Sign in or create an account.</p>
-
-                    <div class="field middle-align">
-                        <label class="checkbox" style="width: 100%;">
-                            <input type="checkbox" id="is-manager-checkbox">
-                            <span>Login as Admin</span>
-                        </label>
-                    </div>
-
-                    <div id="email-entry-step" class="row vertical" style="gap: 0.5em;">
-                        <div class="field label border round responsive"> <input type="email" id="email-input" name="email-input" placeholder=" " required> <label for="email-input">Email Address</label>
-                        </div>
-                        <button id="send-otp-register-btn" class="primary round fill responsive ripple" style="margin: 0;">Continue with Email</button>
-                    </div>
-
-                    <div class="divider-container">
-                    </div>
-
-                    <button id="google-login-btn" class="round fill responsive ripple">
-                        <svg class="icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width: 20px; height: 20px; margin-right: 8px;">
-                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
-                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
-                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"></path>
-                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path>
-                            <path d="M1 1h22v22H1z" fill="none"></path>
-                        </svg>
-                        Sign in with Google
-                    </button>
-                </div>
-            </main>
-
-            <footer style="background: var(--inverse-surface);" class="padding center-align white-text">
-                <p>&copy; <span id="current-year"></span> Malta Veterans Association. All rights reserved.</p>
-                <p class="small-text" style="margin: 0; opacity: 0.5;">PocketBase linked to: <span id="pb-url-display">Not Connected</span></p>
-            </footer>
         </div>
     </div>
-    <script src="login.js"></script>
+
+    <!-- OTP Modal content is now directly in the wizard -->
+    <!-- Register Confirm Modal is unused and will be removed -->
+    <!-- Veteran Details Modal content is now directly in the wizard -->
+    <!-- Auth Method Modal content is now directly in the wizard -->
+    <!-- Email Entry Modal content is now directly in the wizard -->
+
+    <header class="fixed responsive max">
+        <nav style="gap: 0;">
+            <img src="https://raw.githubusercontent.com/Joedotmt/mva/f57acb904a89a49a0afde957145b86855be5a706/branding/Logo%20No%20Text%20latest.svg"
+                alt="MVA Logo" style="height: 3rem; margin-right: 0.5rem;">
+            <h5 class="max">Malta Veterans Association</h5>
+            <div style="margin: auto;"></div>
+            <button class="ripple">
+                <span>Back to website</span>
+                <i>language</i>
+            </button>
+        </nav>
+    </header>
+
+    <main style="max-inline-size: 100%;" class="main-content responsive middle-align center-align">
+        <div id="wizard-container" class="card border">
+            <div id="wizard-content">
+                <div id="wizard-steps">
+                    <div id="step-initial" class="wizard-step">
+                        <div class="wizard-step-content">
+                            <h5 style="padding-left: 0;">Welcome</h5>
+                            <div class="divider-container"></div>
+                            <button style="height: 4em;" id="signin-btn" class="ripple border responsive fill">Sign
+                                in to an existing account</button>
+                            <button style="height: 4em; margin: 10px 0;" id="create-account-btn"
+                                class="ripple border responsive fill">Register a new account</button>
+                        </div>
+                    </div>
+                    <div id="step-veteran-details" class="wizard-step hidden">
+                        <div class="wizard-step-content">
+                            <h5 class="modal-header-custom">Create a new account</h5>
+                            <p class="modal-body-custom">Please provide your details to create a new account. All fields
+                                are
+                                required.</p>
+                            <p id="veteran-details-error" class="error-message hidden"></p>
+                            <form id="veteran-details-form">
+                                <div class="field label border margin">
+                                    <input type="text" id="detail-full_name" required>
+                                    <label for="detail-full_name">Full Name</label>
+                                </div>
+                                <div class="field label border margin">
+                                    <input type="text" id="detail-id_card_number" required>
+                                    <label for="detail-id_card_number">ID Card Number</label>
+                                </div>
+                                <div class="field textarea label border margin">
+                                    <textarea id="detail-full_address" rows="2" required></textarea>
+                                    <label for="detail-full_address">Full Home Address</label>
+                                </div>
+                                <div class="field label border margin">
+                                    <input type="tel" id="detail-phone_number" required>
+                                    <label for="detail-phone_number">Phone Number</label>
+                                </div>
+
+                                <hr class="divider margin">
+                                <h6>Next of Kin Details</h6>
+                                <div class="field label border margin">
+                                    <input type="text" id="detail-next_of_kin_full_name" required>
+                                    <label for="detail-next_of_kin_full_name">Next of Kin Full Name</label>
+                                </div>
+                                <div class="field label border margin">
+                                    <input type="tel" id="detail-next_of_kin_full_phone_number" required>
+                                    <label for="detail-next_of_kin_full_phone_number">Next of Kin Phone Number</label>
+                                </div>
+                                <div style="margin-bottom: 1em;" class="field label border margin">
+                                    <input type="text" id="detail-next_of_kin_relationship" required>
+                                    <label for="detail-next_of_kin_relationship">Relationship to Next of Kin</label>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div id="step-auth-method" class="wizard-step">
+                        <div class="wizard-step-content">
+                            <h5>Sign in method</h5>
+                            <div class="divider-container"></div>
+                            <div class="row vertical" style="gap: 0.5em;">
+                                <button id="auth-method-email-btn" class="border round fill responsive ripple"
+                                    style="margin: 0; height: 4em;">Continue with Email</button>
+                            </div>
+                            <button style="margin: 0; margin-top: 10px; height: 4em;" id="auth-method-google-btn"
+                                class="border round fill responsive ripple">
+                                <svg class="icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"
+                                    style="width: 20px; height: 20px; margin-right: 8px;">
+                                    <path
+                                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                                        fill="#4285F4"></path>
+                                    <path
+                                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                                        fill="#34A853"></path>
+                                    <path
+                                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                                        fill="#FBBC05"></path>
+                                    <path
+                                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                                        fill="#EA4335"></path>
+                                    <path d="M1 1h22v22H1z" fill="none"></path>
+                                </svg>
+                                Continue with Google
+                            </button>
+                            <p id="auth-method-error" class="error-message hidden" style="margin-top: 1rem;"></p>
+                        </div>
+                    </div>
+                    <div id="step-email-entry" class="wizard-step">
+                        <div class="wizard-step-content">
+                            <h5 class="modal-header-custom">Enter your email</h5>
+                            <p id="email-entry-error" class="error-message hidden"></p>
+                            <form id="email-entry-form">
+                                <div class="field label border round responsive">
+                                    <input type="email" id="email-input" name="email-input" placeholder=" " required>
+                                    <label for="email-input">Email Address</label>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div id="step-otp" class="wizard-step">
+                        <div class="wizard-step-content">
+                            <h5 class="modal-header-custom">Enter code</h5>
+                            <div id="otp-modal-message" class="modal-body-custom">
+                                A code has been sent to <span id="otp-email-display" class="bold">your email</span>.
+                                Please
+                                enter it below.
+                            </div>
+                            <p id="otp-error" class="error-message hidden"></p>
+                            <div class="field border large margin round"> <input type="text" id="otp-code"
+                                    name="otp-code" placeholder="------" maxlength="6" class="center-align"
+                                    style="letter-spacing: 0.5em;">
+                                <label for="otp-code" class="sr-only">One time code</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="wizard-actions">
+                <button id="wizard-back-btn" class="tertiary round">Back</button>
+                <div style="flex-grow: 1; text-align: center;">
+                    <button id="admin-sign-in" style="color:gray; height: 20px" class="ripple border">I am an administrator</button>
+                </div>
+                <button id="wizard-next-btn" class="primary round">Next</button>
+            </div>
+        </div>
+    </main>
+
+    <footer style="background: var(--inverse-surface);" class="hidden padding center-align white-text">
+        <p>&copy; <span id="current-year"></span> Malta Veterans Association. All rights reserved.</p>
+        <p class="small-text" style="margin: 0; opacity: 0.5;">PocketBase linked to: <span id="pb-url-display">Not
+                Connected</span></p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const POCKETBASE_URL = 'https://veterans.fly.dev';
+            const pb = new PocketBase(POCKETBASE_URL);
+
+            // --- State ---
+            let isNewUserFlow = false;
+            let isAdminFlow = false;
+            let veteranDetails = {};
+            let otpId = null;
+
+            // --- DOM Elements ---
+            const loadingIndicator = document.getElementById('loading-indicator');
+
+            const wizardContainer = document.getElementById('wizard-container');
+            const wizardContent = document.getElementById('wizard-content');
+            const wizardSteps = document.getElementById('wizard-steps');
+            const wizardActions = document.getElementById('wizard-actions');
+            const wizardBackBtn = document.getElementById('wizard-back-btn');
+            const wizardNextBtn = document.getElementById('wizard-next-btn');
+
+            const stepInitial = document.getElementById('step-initial');
+            const stepVeteranDetails = document.getElementById('step-veteran-details');
+            const stepAuthMethod = document.getElementById('step-auth-method');
+            const stepEmailEntry = document.getElementById('step-email-entry');
+            const stepOtp = document.getElementById('step-otp');
+
+            const signInBtn = document.getElementById('signin-btn');
+            const createAccountBtn = document.getElementById('create-account-btn');
+            const adminSignInBtn = document.getElementById('admin-sign-in');
+
+            const veteranDetailsForm = document.getElementById('veteran-details-form');
+            const veteranDetailsError = document.getElementById('veteran-details-error');
+
+            const authMethodEmailBtn = document.getElementById('auth-method-email-btn');
+            const authMethodGoogleBtn = document.getElementById('auth-method-google-btn');
+            const authMethodError = document.getElementById('auth-method-error');
+
+            const emailEntryForm = document.getElementById('email-entry-form');
+            const emailInput = document.getElementById('email-input');
+            const emailEntryError = document.getElementById('email-entry-error');
+
+            const otpCodeInput = document.getElementById('otp-code');
+            const otpEmailDisplay = document.getElementById('otp-email-display');
+            const verifyOtpBtn = document.getElementById('verify-otp-btn');
+            const otpError = document.getElementById('otp-error');
+
+            const messageModal = document.getElementById('message-modal');
+            const messageModalTitle = document.getElementById('message-modal-title');
+            const messageModalText = document.getElementById('message-modal-text');
+
+            // --- Wizard & UI Helpers ---
+            let steps = {};
+            let currentStep;
+
+            const setupSteps = (isRegisterFlow) => {
+
+                // Reorder DOM elements to match the flow
+                if (isRegisterFlow) {
+                    // initial -> veteran-details -> auth-method -> email-entry -> otp
+                    wizardSteps.appendChild(stepInitial);
+                    wizardSteps.appendChild(stepVeteranDetails);
+                    wizardSteps.appendChild(stepAuthMethod);
+                    wizardSteps.appendChild(stepEmailEntry);
+                    wizardSteps.appendChild(stepOtp);
+
+                    stepVeteranDetails.classList.remove('hidden');
+                    steps = {
+                        initial: 0,
+                        veteranDetails: 1,
+                        authMethod: 2,
+                        emailEntry: 3,
+                        otp: 4,
+                    };
+                } else {
+                    // initial -> auth-method -> email-entry -> otp
+                    wizardSteps.appendChild(stepInitial);
+                    wizardSteps.appendChild(stepAuthMethod);
+                    wizardSteps.appendChild(stepEmailEntry);
+                    wizardSteps.appendChild(stepOtp);
+                    wizardSteps.appendChild(stepVeteranDetails); // Move to end
+
+                    stepVeteranDetails.classList.add('hidden');
+                    steps = {
+                        initial: 0,
+                        authMethod: 1,
+                        emailEntry: 2,
+                        otp: 3,
+                    };
+                }
+                currentStep = steps.initial;
+            };
+
+
+            const updateWizardActions = (stepIndex) => {
+                wizardActions.classList.remove('hidden');
+                wizardBackBtn.classList.remove('hidden');
+                wizardNextBtn.classList.remove('hidden');
+                adminSignInBtn.classList.remove('hidden');
+
+                // Find which step key corresponds to the current index
+                const stepKey = Object.keys(steps).find(key => steps[key] === stepIndex);
+
+                switch (stepKey) {
+                    case 'initial':
+                        wizardBackBtn.classList.add('hidden');
+                        wizardNextBtn.classList.add('hidden');
+                        break;
+                    case 'veteranDetails':
+                        adminSignInBtn.classList.add('hidden');
+                        wizardNextBtn.textContent = 'Next';
+                        wizardNextBtn.onclick = () => handleVeteranDetailsSubmit(new Event('submit'));
+                        break;
+                    case 'authMethod':
+                        adminSignInBtn.classList.add('hidden');
+                        // This step has its own buttons, so we hide the generic 'next'
+                        wizardNextBtn.classList.add('hidden');
+                        break;
+                    case 'emailEntry':
+                        adminSignInBtn.classList.add('hidden');
+                        wizardNextBtn.textContent = 'Next';
+                        wizardNextBtn.onclick = () => handleEmailEntrySubmit(new Event('submit'));
+                        break;
+                    case 'otp':
+                        adminSignInBtn.classList.add('hidden');
+                        wizardNextBtn.textContent = isAdminFlow ? 'Verify & Sign In' : 'Verify & Login';
+                        wizardNextBtn.onclick = handleOtpSubmit;
+                        break;
+                }
+            };
+
+            const goToStep = (stepIndex) => {
+                const prevStep = currentStep;
+                currentStep = stepIndex;
+
+                // --- REMOVED: Conditionally set overflow for veteran details step ---
+                // const stepKey = Object.keys(steps).find(key => steps[key] === stepIndex);
+                // if (stepKey === 'veteranDetails') {
+                //     wizardContent.style.overflowY = 'auto';
+                // } else {
+                //     wizardContent.style.overflowY = 'hidden';
+                // }
+
+                // No need for special skip logic anymore as steps are remapped
+                wizardSteps.style.transform = `translateX(-${stepIndex * 100}%)`;
+
+                updateWizardActions(stepIndex);
+
+                // --- ADDED: ensure only the active step is interactive/focusable ---
+                setActiveStepInteractivity(stepIndex);
+            };
+
+            // --- ADDED: disable/enable interactivity and tabbing for steps ---
+            const setActiveStepInteractivity = (activeIndex) => {
+                document.querySelectorAll('.wizard-step').forEach((stepEl, idx) => {
+                    // focusable selectors commonly used
+                    const focusableSelector = 'a, button, input, select, textarea, [tabindex]';
+                    const focusables = Array.from(stepEl.querySelectorAll(focusableSelector));
+
+                    if (idx === activeIndex) {
+                        stepEl.classList.remove('step-inactive');
+                        stepEl.removeAttribute('aria-hidden');
+                        try { stepEl.inert = false; stepEl.removeAttribute('inert'); } catch (e) { }
+                        focusables.forEach(node => {
+                            if (node.dataset.origTabindex !== undefined) {
+                                // restore previously stored tabindex
+                                node.setAttribute('tabindex', node.dataset.origTabindex);
+                                delete node.dataset.origTabindex;
+                            } else {
+                                // if we previously forced tabindex="-1", remove it
+                                if (node.getAttribute('tabindex') === '-1') {
+                                    node.removeAttribute('tabindex');
+                                }
+                            }
+                        });
+                    } else {
+                        stepEl.classList.add('step-inactive');
+                        stepEl.setAttribute('aria-hidden', 'true');
+                        try { stepEl.inert = true; stepEl.setAttribute('inert', ''); } catch (e) { }
+                        focusables.forEach(node => {
+                            // store original tabindex if present
+                            if (node.hasAttribute('tabindex')) {
+                                node.dataset.origTabindex = node.getAttribute('tabindex');
+                            }
+                            node.setAttribute('tabindex', '-1');
+                        });
+                    }
+                });
+            };
+
+            const showModal = (modal) => {
+                const errorElement = modal.querySelector('.error-message');
+                if (errorElement) {
+                    errorElement.textContent = '';
+                    errorElement.classList.add('hidden');
+                }
+                modal.classList.remove('hidden');
+            };
+            const hideModal = (modal) => modal.classList.add('hidden');
+            const showLoading = () => showModal(loadingIndicator);
+            const hideLoading = () => hideModal(loadingIndicator);
+
+            const showErrorInStep = (errorElement, message) => {
+                errorElement.textContent = message;
+                errorElement.classList.remove('hidden');
+            };
+
+            const showMessage = (title, message) => {
+                messageModalTitle.textContent = title;
+                messageModalText.textContent = message;
+                showModal(messageModal);
+            };
+
+            window.hideMessageModal = () => hideModal(messageModal);
+
+            // --- Event Listeners ---
+
+            // Path selection
+            signInBtn.addEventListener('click', () => {
+                isNewUserFlow = false;
+                isAdminFlow = false;
+                setupSteps(false);
+                goToStep(steps.authMethod);
+            });
+
+            createAccountBtn.addEventListener('click', () => {
+                isNewUserFlow = true;
+                isAdminFlow = false;
+                setupSteps(true);
+                goToStep(steps.veteranDetails);
+            });
+
+            adminSignInBtn.addEventListener('click', () => {
+                isNewUserFlow = false;
+                isAdminFlow = true;
+                setupSteps(false); // No registration flow for admins
+                goToStep(steps.authMethod);
+            });
+
+            // Veteran Details Form
+            const handleVeteranDetailsSubmit = (e) => {
+                e.preventDefault();
+                let allFieldsFilled = true;
+                veteranDetails = { status: "Application", emailVisibility: true };
+
+                veteranDetailsForm.querySelectorAll('input[required], textarea[required]').forEach(input => {
+                    if (!input.value.trim()) {
+                        allFieldsFilled = false;
+                    }
+                    veteranDetails[input.id.replace('detail-', '')] = input.value.trim();
+                });
+
+                if (allFieldsFilled) {
+                    veteranDetailsError.classList.add('hidden');
+                    goToStep(steps.authMethod);
+                } else {
+                    showErrorInStep(veteranDetailsError, 'Please fill all required fields.');
+                }
+            };
+            veteranDetailsForm.addEventListener('submit', handleVeteranDetailsSubmit);
+
+
+            // Auth Method Selection
+            authMethodEmailBtn.addEventListener('click', () => {
+                goToStep(steps.emailEntry);
+            });
+
+            authMethodGoogleBtn.addEventListener('click', async () => {
+                showLoading();
+                try {
+                    const createData = isNewUserFlow ? veteranDetails : {};
+                    const collection = isAdminFlow ? 'managers' : 'veterans';
+                    console.log(createData)
+                    await pb.collection(collection).authWithOAuth2({
+                        provider: 'google',
+                        createData: createData
+                    });
+                    window.location.href = isAdminFlow ? '/admin' : '/profile';
+                } catch (err) {
+                    hideLoading();
+                    if (err.message == 'Failed to create record.') {
+                        showErrorInStep(authMethodError, `No account found with this email. Please create a new account.`);
+                    }
+                    else {
+                        showErrorInStep(authMethodError, `Could not authenticate with Google. ${err.message}`);
+                    }
+                }
+            });
+
+            // Email Entry Form
+            const handleEmailEntrySubmit = async (e) => {
+                e.preventDefault();
+                const email = emailInput.value.trim();
+                if (!email) return;
+
+                showLoading();
+                emailEntryError.classList.add('hidden'); // Clear previous errors
+
+                try {
+                    if (isAdminFlow) {
+                        // Admin flow: skip email check, directly request OTP
+                        try {
+                            const otpRequestData = await pb.collection('managers').requestOTP(email);
+                            otpId = otpRequestData.otpId;
+                            otpEmailDisplay.textContent = email;
+                            goToStep(steps.otp);
+                        } catch (err) {
+                            // This will likely fail if the email doesn't exist in the managers collection
+                            showErrorInStep(emailEntryError, 'No admin account found with this email.');
+                        }
+                    } else {
+                        // Veteran flow: check if email exists first
+                        const collection = 'veterans';
+                        const response = await fetch(`${pb.baseUrl}/api/check-email`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email: email, collection: collection }),
+                        });
+
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            throw new Error(`API check failed with status ${response.status}: ${errorText}`);
+                        }
+
+                        const result = await response.json();
+                        const userExists = result.exists;
+
+                        if (isNewUserFlow) {
+                            if (userExists) {
+                                showErrorInStep(emailEntryError, 'An account with this email already exists. Please sign in instead.');
+                            } else {
+                                // Manually create user, then request OTP
+                                veteranDetails.email = email;
+                                const randomPassword = crypto.randomUUID();
+                                veteranDetails.password = randomPassword;
+                                veteranDetails.passwordConfirm = randomPassword;
+                                await pb.collection('veterans').create(veteranDetails);
+                                const otpRequestData = await pb.collection('veterans').requestOTP(email);
+                                otpId = otpRequestData.otpId;
+                                otpEmailDisplay.textContent = email;
+                                goToStep(steps.otp);
+                            }
+                        } else { // Sign-in flow
+                            if (userExists) {
+                                const otpRequestData = await pb.collection(collection).requestOTP(email);
+                                otpId = otpRequestData.otpId;
+                                otpEmailDisplay.textContent = email;
+                                goToStep(steps.otp);
+                            } else {
+                                showErrorInStep(emailEntryError, 'No account found with this email. Please create a new account.');
+                            }
+                        }
+                    }
+                } catch (err) {
+                    showErrorInStep(emailEntryError, `An unexpected error occurred. ${err.message}`);
+                } finally {
+                    hideLoading();
+                }
+            };
+            emailEntryForm.addEventListener('submit', handleEmailEntrySubmit);
+
+            // OTP Step
+            const handleOtpSubmit = async () => {
+                const otp = otpCodeInput.value.trim();
+                if (!otpId || !otp) {
+                    showErrorInStep(otpError, 'Please enter the code from your email.');
+                    return;
+                }
+                showLoading();
+                try {
+                    // User is either found or created before this step, so no createData is needed.
+                    const collection = isAdminFlow ? 'managers' : 'veterans';
+                    await pb.collection(collection).authWithOTP(otpId, otp);
+                    window.location.href = isAdminFlow ? '/admin' : '/profile';
+                } catch (err) {
+                    showErrorInStep(otpError, `The provided code is incorrect or has expired. Please try again.`);
+                } finally {
+                    hideLoading();
+                }
+            };
+            // The button click is now handled by wizardNextBtn's onclick handler for this step
+
+
+            // Wizard Navigation Buttons
+            wizardBackBtn.addEventListener('click', () => {
+                const stepKey = Object.keys(steps).find(key => steps[key] === currentStep);
+                switch (stepKey) {
+                    case 'veteranDetails':
+                        goToStep(steps.initial);
+                        break;
+                    case 'authMethod':
+                        if (isNewUserFlow) {
+                            goToStep(steps.veteranDetails);
+                        } else {
+                            goToStep(steps.initial);
+                        }
+                        break;
+                    case 'emailEntry':
+                        goToStep(steps.authMethod);
+                        break;
+                    case 'otp':
+                        goToStep(steps.emailEntry);
+                        break;
+                }
+            });
+
+            // This button's logic is now handled by assigning onclick handlers in updateWizardActions
+            // wizardNextBtn.addEventListener('click', ...);
+
+
+            // --- Initialization ---
+            const initializeApp = () => {
+                setupSteps(false); // Default to register flow so all steps are visible initially
+                goToStep(steps.initial);
+
+                // Ensure correct interactivity state on initial render
+                setActiveStepInteractivity(currentStep);
+                updateWizardActions(currentStep); // Set initial button state
+
+                document.getElementById('current-year').textContent = new Date().getFullYear();
+                document.getElementById('pb-url-display').textContent = POCKETBASE_URL;
+
+                // Handle OAuth redirect
+                if (pb.authStore.isValid && pb.authStore.model) {
+                    // This block can be executed if the user is redirected back from an OAuth provider
+                    wizardContainer.classList.add('hidden');
+
+                    // TODO: Redirect to the main application page.
+                    const collectionName = pb.authStore.model.collectionName;
+                    window.location.href = collectionName === 'managers' ? '/admin' : '/profile';
+                }
+            };
+            initializeApp();
+        })
+    </script>
 </body>
+
 </html>

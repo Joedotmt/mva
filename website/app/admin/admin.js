@@ -736,7 +736,6 @@ async function renderVeteransList(veteransToRender) {
             } else {
                 recordPaymentBtn.disabled = true;
                 recordPaymentBtn.title = "No payment currently due.";
-                recordPaymentBtn.classList.add('tooltip');
             }
             actionsNav.appendChild(recordPaymentBtn);
 
@@ -964,20 +963,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
-            let closedSomething = false;
-            const activeModal = document.querySelector('dialog.modal.active, dialog.modal[open]');
-            const activeDrawer = document.querySelector('dialog.right.active, dialog.right[open]'); // BeerCSS uses 'open' attribute too
-
-            if (activeModal && typeof ui === 'function' && activeModal.id !== 'loading-indicator') { // Don't close loading indicator with Esc
-                if (activeModal.id === 'confirm-action-dialog' || activeModal.id === 'message-dialog') {
-                    ui(`#${activeModal.id}`);
-                    closedSomething = true;
-                }
-            } else if (activeDrawer && typeof ui === 'function' && activeDrawer.id === 'member-details-drawer') {
-                ui('#member-details-drawer');
-                closedSomething = true;
+            if (memberDetailsDrawer.classList.contains("active")) {
+                ui("#member-details-drawer")
             }
-            if (closedSomething) event.preventDefault();
         }
     });
     document.getElementById("pb_admin_button").href = POCKETBASE_URL;

@@ -238,6 +238,20 @@
         </nav>
     </dialog>
 
+    <dialog class="modal" id="delete-confirm-dialog">
+        <h5>Confirm Account Deletion</h5>
+        <p class="large-text">Are you absolutely sure you want to permanently delete your account? This action cannot be undone. All your data will be erased.</p>
+        <p>To confirm, please type "delete account" in the box below.</p>
+        <div class="field label border">
+            <input type="text" id="delete-confirm-input" autocomplete="off">
+            <label for="delete-confirm-input">Type here</label>
+        </div>
+        <nav class="right-align">
+            <button id="delete-confirm-cancel-btn">Cancel</button>
+            <button class="error" id="delete-confirm-btn" disabled>Yes, Delete My Account</button>
+        </nav>
+    </dialog>
+
     <header style="background-color: var(--inverse-primary);">
         <nav>
             <img src="https://raw.githubusercontent.com/Joedotmt/mva/f57acb904a89a49a0afde957145b86855be5a706/branding/Logo%20No%20Text%20latest.svg" alt="MVA Logo" style="height: 3rem;">
@@ -352,6 +366,8 @@
             </div>
         </div>
 
+
+        <button id="delete-account-btn" style="height: 10px;  background: transparent; color: var(--on-surface-variant); width: fit-content; font-size: 0.8rem; padding: 0.25rem 0.5rem; border: 1px solid var(--outline-variant); border-radius: 4px; margin: 0 auto 1rem auto; opacity: 0.7; margin-top: 5em;">Delete My Account</button>
 
     </main>
 
