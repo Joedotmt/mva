@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Events</title>
+    <link href="https://fonts.googleapis.com/css2?family=Secular+One&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Secular One', sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .header {
+            position: relative;
+            height: 350px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+
+            background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+                url('events_backdrop.jpg');
+        }
+
+        .header-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 150%;
+            background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+                url('events_backdrop.jpg');
+
+            background-size: cover;
+            background-position: 50% 70%;
+
+            transition: transform 0s;
+        }
+
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            color: white;
+            font-size: 64px;
+            text-align: center;
+            margin-bottom: 20px;
+            z-index: 1;
+        }
+
+        /* Event Sections */
+        .event-section {
+            background: rgba(48, 48, 51, 1);
+            color: rgba(225, 223, 219, 1);
+            padding: 40px 20px;
+        }
+
+        .event-section:nth-child(even) {
+            background: rgba(225, 223, 219, 1);
+            color: rgba(48, 48, 51, 1);
+        }
+
+        .subheader {
+            font-family: 'Playfair Display', serif;
+            text-align: center;
+            font-size: 2.5em;
+            text-decoration: underline;
+            font-style: italic;
+        }
+
+        .event-date {
+            font-weight: bold;
+            font-size: 24px;
+        }
+
+        .event-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+
+        .event-description {
+            flex: 1;
+            min-width: 300px;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            flex: 2;
+            min-width: 400px;
+        }
+
+        .image-grid img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 30px;
+            corner-shape: squircle;
+        }
+
+        .single-image {
+            flex: 1;
+            min-width: 250px;
+            
+ 
+        }
+
+        .single-image img {
+            width: 100%;
+            height: auto;
+
+                       border-radius: 30px;
+            corner-shape: squircle;
+
+            overflow: hidden;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 32px;
+            }
+
+            .image-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .event-content {
+                flex-direction: column;
+            }
+
+            .nav a {
+                margin: 0 5px;
+                font-size: 12px;
+            }
+        }
+    </style>
+    <script>
+        // JavaScript to dynamically load the navigation bar
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch('nav.html')
+                .then(response => response.text())
+                .then(data => {
+                    nav_container.insertAdjacentHTML('afterbegin', data);
+                })
+                .catch(error => console.error('Error loading navigation:', error));
+        });
+    </script>
+
+</head>
+
+<body>
+    <div class="header">
+        <div id="headerbg" class="header-bg"></div>
+        <div style="z-index: 3;" id="nav_container"></div>
+        <h1>All Events and News</h1>
+    </div>
+
+    <script>
+        window.addEventListener('scroll', () => {
+            let scrollPosition = window.scrollY;
+
+            headerbg.style.transform = `translateY(${scrollPosition * 0.1}%)`;
+
+            if (scrollPosition > 40) {
+                document.querySelector('.nav').style.background = 'rgba(28,28,28,1)';
+            }
+            else {
+                document.querySelector('.nav').style.background = 'transparent';
+            }
+        });
+    </script>
+
+
+
+    <div class="event-section">
+        <h2 class="subheader">Upcoming Events</h2>
+    </div>
+
+    <div class="event-section">
+        <h2 class="event-date">No Upcoming Events</h2>
+    </div>
+
+    <div class="event-section">
+        <h2 class="subheader">Past Events</h2>
+    </div>
+
+
+    <!-- Past Events Section -->
+    <div class="event-section">
+        <!-- Event 1: September 2023 -->
+        <div class="event-content">
+            <div class="event-description">
+                <div class="event-date">29 September 2023</div>
+                <p>The latest charity gala for the MALTESE VETERAN REAL ESTATE ASSOCIATION was hosted on September 29th
+                    at the Grand Marina. Our board members gathered to discuss future initiatives that will help
+                    veterans and their families integrate better into civilian life. We are grateful to everyone who
+                    attended and showed support. Your contributions have enabled us to provide vital services to those
+                    who have served our nation.</p>
+            </div>
+            <div class="image-grid">
+                <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=300&h=200&fit=crop"
+                    alt="Event photo">
+                <img src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=300&h=200&fit=crop"
+                    alt="Event photo">
+                <img src="https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=300&h=200&fit=crop"
+                    alt="Event photo">
+                <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=300&h=200&fit=crop"
+                    alt="Event photo">
+                <img src="https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=300&h=200&fit=crop"
+                    alt="Event photo">
+                <img src="https://images.unsplash.com/photo-1556745757-8d76bdb6984b?w=300&h=200&fit=crop"
+                    alt="Event photo">
+                <img src="https://images.unsplash.com/photo-1591115765373-5207764f72e7?w=300&h=200&fit=crop"
+                    alt="Event photo">
+                <img src="https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=300&h=200&fit=crop"
+                    alt="Event photo">
+                <img src="https://images.unsplash.com/photo-1552581234-26160f608093?w=300&h=200&fit=crop"
+                    alt="Event photo">
+            </div>
+        </div>
+    </div>
+
+    <!-- Event 2: August 2023 -->
+    <div class="event-section">
+        <div class="event-content">
+            <div class="event-description">
+                <div class="event-date">11 August 2023</div>
+                <p>Our commemorative event held at the Naval Base was a resounding success! Representatives from various
+                    branches attended the ceremony at the memorial grounds, honoring the USS Liberty victims. Families
+                    and veterans came together to pay their respects and share meaningful moments of remembrance.</p>
+                <p>The ceremony included a formal flag presentation, followed by a memorial service. This event not only
+                    commemorates those we've lost but also strengthens the bonds within our veteran community. Special
+                    thanks to all who participated in making this a memorable occasion.</p>
+            </div>
+            <div class="image-grid">
+                <img src="https://images.unsplash.com/photo-1603732551658-5fabbafa84eb?w=300&h=200&fit=crop"
+                    alt="Naval event">
+                <img src="https://images.unsplash.com/photo-1580894732444-8ecded7900cd?w=300&h=200&fit=crop"
+                    alt="Veterans gathering">
+                <img src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=300&h=200&fit=crop"
+                    alt="Ship photo">
+                <img src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=300&h=200&fit=crop"
+                    alt="Memorial">
+                <img src="https://images.unsplash.com/photo-1473163928189-364b2c4e1135?w=300&h=200&fit=crop"
+                    alt="Harbor view">
+            </div>
+        </div>
+    </div>
+
+    <!-- Event 3: July 2023 -->
+    <div class="event-section">
+        <div class="event-content">
+            <div class="event-description">
+                <div class="event-date">July 21, 2023</div>
+                <p>We had another incredible social gathering where members and their families came together for an
+                    afternoon of camaraderie and relaxation at our community center.</p>
+            </div>
+            <div class="single-image">
+                <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=400&h=300&fit=crop"
+                    alt="Family gathering">
+            </div>
+            <div class="single-image">
+                <img src="https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400&h=300&fit=crop"
+                    alt="Social event">
+            </div>
+        </div>
+    </div>
+
+    <!-- Event 4: June 2023 -->
+    <div class="event-section">
+        <div class="event-content">
+            <div class="event-description">
+                <div class="event-date">12 June, 2023</div>
+                <p>Annual Charity Golf Tournament and Luncheon took place at Riverside Country Club.</p>
+            </div>
+            <div class="single-image">
+                <img src="https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=600&h=400&fit=crop"
+                    alt="Golf course">
+            </div>
+        </div>
+    </div>
+
+    <!-- Event 5: April 2023 -->
+    <div class="event-section">
+        <div class="event-content">
+            <div class="event-description">
+                <div class="event-date">22 April, 2023</div>
+                <p>Memorial Dedication Ceremony and Garden Gathering took place at our headquarters. Veterans and their
+                    families gathered for this memorable occasion where new memorial plaques were unveiled. The event
+                    included refreshments, speeches from distinguished guests, and a moment of silence for our fallen
+                    comrades. The beautiful garden setting provided the perfect backdrop for reflecting on the
+                    sacrifices made by those who served our nation.</p>
+            </div>
+            <div class="image-grid">
+                <img src="https://images.unsplash.com/photo-1607827448387-a67db1383b59?w=300&h=200&fit=crop"
+                    alt="Military ceremony">
+                <img src="https://images.unsplash.com/photo-1517760444937-f6397edcbbcd?w=300&h=200&fit=crop"
+                    alt="Flowers">
+                <img src="https://images.unsplash.com/photo-1603732551681-2e91159b9dc2?w=300&h=200&fit=crop"
+                    alt="Veterans">
+            </div>
+        </div>
+    </div>
+
+    <!-- Event 6: March 2023 -->
+    <div class="event-section">
+        <div class="event-content">
+            <div class="event-description">
+                <div class="event-date">3 March, 2023</div>
+                <p>Meeting and Lunch Reception for new members held at our Garden Pavilion.</p>
+                <p>New members were formally welcomed into the Veterans Association with a special reception. The event
+                    featured opening remarks from our leadership, an introduction of new members to the community, and
+                    opportunities for networking. Members enjoyed a catered lunch while discussing upcoming initiatives
+                    and ways to support our veteran community.</p>
+                <p>Welcome to all the new members, and we look forward to your active participation in our mission to
+                    serve those who served.</p>
+            </div>
+            <div class="image-grid">
+                <img src="https://images.unsplash.com/photo-1511578314322-379afb476865?w=300&h=200&fit=crop"
+                    alt="Reception">
+                <img src="https://images.unsplash.com/photo-1464207687429-7505649dae38?w=300&h=200&fit=crop"
+                    alt="Meeting">
+                <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&h=200&fit=crop"
+                    alt="Group photo">
+            </div>
+        </div>
+    </div>
+
+    <!-- Event 7: Women's Lunch -->
+    <div class="event-section">
+        <div class="event-content">
+            <div class="event-description">
+                <div class="event-date">Women's Lunch: 28 March, 2023</div>
+                <p>Ladies from all branches came together for a long-awaited lunch and social gathering at the Grand
+                    Marina.</p>
+            </div>
+            <div class="image-grid" style="grid-template-columns: repeat(2, 1fr);">
+                <img src="https://images.unsplash.com/photo-1609234656388-0ff363383899?w=300&h=200&fit=crop"
+                    alt="Lunch gathering">
+                <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=300&h=200&fit=crop"
+                    alt="Dining">
+                <img src="https://images.unsplash.com/photo-1555244162-803834f70033?w=300&h=200&fit=crop" alt="Food">
+                <img src="https://images.unsplash.com/photo-1424847651672-bf20a4b0982b?w=300&h=200&fit=crop"
+                    alt="Table setting">
+            </div>
+        </div>
+    </div>
+
+    <!-- Event 8: February 2023 -->
+    <div class="event-section">
+        <div class="event-content">
+            <div class="event-description">
+                <div class="event-date">13 February, 2023</div>
+                <p>REMEMBRANCE AND MEMORIAL SERVICE</p>
+                <p>Annual Memorial Service for fallen comrades. Memorial flowers and wreaths laid at the National
+                    Veterans Memorial.</p>
+                <p>Guest Speakers addressed the gathering with powerful tributes, followed by a wreath-laying ceremony
+                    and moment of silence. Veterans from all branches attended to honor those who made the ultimate
+                    sacrifice.</p>
+                <p>We appreciate everyone who participated in this solemn and meaningful ceremony.</p>
+            </div>
+            <div class="single-image">
+                <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=600&h=400&fit=crop"
+                    alt="Memorial building">
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
