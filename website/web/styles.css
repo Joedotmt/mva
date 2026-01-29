@@ -1,0 +1,221 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Secular One', sans-serif;
+    background-color: #000000;
+}
+
+
+.header {
+    position: relative;
+    height: 350px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.header-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 150%;
+    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+        url('events_backdrop.jpg');
+
+    background-size: cover;
+    background-position: 50% 60%;
+
+    transition: transform 0s;
+}
+
+
+h1 {
+    font-family: 'Playfair Display', serif;
+    color: white;
+    font-size: 64px;
+    text-align: center;
+    margin-bottom: 20px;
+    z-index: 1;
+    text-shadow: 0 0 6px black;
+}
+
+/* Event Sections */
+.event-section {
+    background: rgba(48, 48, 51, 1);
+    color: rgba(225, 223, 219, 1);
+    padding: 40px 20px;
+    overflow: hidden;
+}
+
+.event-section:nth-child(even) {
+    background: rgba(225, 223, 219, 1);
+    color: rgba(48, 48, 51, 1);
+}
+
+.subheader {
+    font-family: 'Playfair Display', serif;
+    text-align: center;
+    font-size: 2.5em;
+    text-decoration: underline;
+    font-style: italic;
+}
+
+.event-date {
+    font-weight: bold;
+    font-size: 24px;
+}
+
+.event-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.event-description {
+    flex: 1;
+    font-size: 16px;
+    line-height: 1.6;
+    max-width: 100%;
+}
+
+.image-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    flex: 2;
+    min-width: 100%;
+}
+
+.image-grid img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 30px;
+    corner-shape: squircle;
+}
+
+.single-image {
+    flex: 1;
+    min-width: 100%;
+
+
+}
+
+.single-image img {
+    width: 100%;
+    height: auto;
+
+    border-radius: 30px;
+    corner-shape: squircle;
+
+    overflow: hidden;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 32px;
+    }
+
+    .image-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .event-content {
+        flex-direction: column;
+    }
+
+    .nav a {
+        margin: 0 5px;
+        font-size: 12px;
+    }
+}
+
+
+/* Container for the whole component */
+.carosel {
+    position: relative;
+    width: 100%;
+    max-width: 600px; /* Adjust size as needed */
+    margin: 0 auto;
+    overflow: hidden; /* Hides the slides that are off-screen */
+    border-radius: 8px;
+    background-color: rgb(0, 0, 0);
+    height: 400px;
+}
+
+/* The moving track that holds images */
+.carosel-track {
+    display: flex;
+    transition: transform 0.4s ease-in-out;
+}
+
+/* Force images to fill the carousel width */
+.carosel-track img {
+    min-width: 100%;
+    height: 400px;
+    object-fit: contain;
+    display: block;
+}
+
+/* --- Controls (Arrows) --- */
+.carosel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgb(27, 27, 27);
+    color: rgb(255, 255, 255);
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 18px;
+    z-index: 10;
+    border-radius: 50%;
+    user-select: none;
+}
+
+.carosel-btn:hover {
+    background: rgb(45, 45, 45);
+}
+
+.carosel-prev { left: 10px; }
+.carosel-next { right: 10px; }
+
+/* --- Dots / Pagination --- */
+.carosel-dots {
+    position: absolute;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 10;
+}
+
+.carosel-dot {
+    width: 10px;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.carosel-dot.active {
+    background: white;
+    transform: scale(1.2);
+}
+
+p {
+    font-size: 1.2em;
+}
