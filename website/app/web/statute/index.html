@@ -3,12 +3,13 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Veterans Association Armed Forces of Malta – Statute</title>
+    <title>MVA Statute</title>
 
     <style>
         body {
+            --a: 45deg;
             font-family: Verdana, Geneva, Tahoma, sans-serif;
-            background: repeating-linear-gradient(45deg,
+            background: repeating-linear-gradient(var(--a),
                     rgb(230, 230, 230),
                     rgb(230, 230, 230) 10px,
                     #c4c4c4 10px,
@@ -256,6 +257,12 @@
         </ol>
 
     </div>
+
+    <script>
+        p = new Set()
+        a = 45
+        document.onkeydown = e => { p.add(e.key); p.has('J') && p.has('O') && p.has('E') && setInterval(() => document.body.style.setProperty('--a', a++ + "deg"), 20)}
+    </script>
 </body>
 
 </html>
