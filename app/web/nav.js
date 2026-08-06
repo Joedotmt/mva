@@ -1,6 +1,6 @@
 // JavaScript to dynamically load the navigation bar
 document.addEventListener("DOMContentLoaded", function () {
-    fetch('/nav.html')
+    fetch('/portal/web/nav.html')
         .then(response => response.text())
         .then(data => {
             nav_container.insertAdjacentHTML('afterbegin', data);

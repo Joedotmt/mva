@@ -68,7 +68,7 @@ if (pb.authStore.isValid && pb.authStore.model && pb.authStore.model.collectionN
 {
     // If not a valid veteran session, clear and redirect.
     pb.authStore.clear();
-    window.location.href = '/mva'; // Redirect to login/home page
+    window.location.href = '/portal/'; // Redirect to the portal login page
 }
 
 if (logoutBtn) logoutBtn.addEventListener('click', handleLogout); // handleLogout is from shared.js
@@ -265,7 +265,7 @@ async function loadProfileData()
         showMessage("Error", "Could not load your profile data. Please try logging in again or contact support if the issue persists."); // Uses shared function
         // Consider if pb.authStore.clear() and redirect is appropriate here, or allow retry.
         // pb.authStore.clear();
-        // window.location.href = '/mva';
+        // window.location.href = '/portal/';
     } finally
     {
         hideLoading(); // Uses shared function
@@ -288,7 +288,7 @@ async function handleDeleteAccount() {
         await pb.collection(VETERANS_COLLECTION).delete(loggedInVeteran.id);
         showMessage("Success", "Your account has been permanently deleted. You will now be logged out.", () => {
             pb.authStore.clear();
-            window.location.href = '/mva';
+            window.location.href = '/portal/';
         });
     } catch (error) {
         console.error("Error deleting account:", error);

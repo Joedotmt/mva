@@ -332,7 +332,7 @@ async function handleLogout()
     try
     {
         pb.authStore.clear();
-        window.location.href = '/mva'; // Redirect to homepage or login page
+        window.location.href = '/portal/'; // Redirect to the portal login page
     } catch (error)
     {
         console.error("Logout failed:", error);

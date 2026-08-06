@@ -711,7 +711,7 @@
                         provider: 'google',
                         createData: createData
                     });
-                    window.location.href = isAdminFlow ? '/admin' : '/profile';
+                    window.location.href = isAdminFlow ? '/portal/admin/' : '/portal/profile/';
                 } catch (err) {
                     hideLoading();
                     if (err.message == 'Failed to create record.') {
@@ -807,7 +807,7 @@
                     // User is either found or created before this step, so no createData is needed.
                     const collection = isAdminFlow ? 'managers' : 'veterans';
                     await pb.collection(collection).authWithOTP(otpId, otp);
-                    window.location.href = isAdminFlow ? '/admin' : '/profile';
+                    window.location.href = isAdminFlow ? '/portal/admin/' : '/portal/profile/';
                 } catch (err) {
                     showErrorInStep(otpError, `The provided code is incorrect or has expired. Please try again.`);
                 } finally {
@@ -863,7 +863,7 @@
 
                     // TODO: Redirect to the main application page.
                     const collectionName = pb.authStore.model.collectionName;
-                    window.location.href = collectionName === 'managers' ? '/admin' : '/profile';
+                    window.location.href = collectionName === 'managers' ? '/portal/admin/' : '/portal/profile/';
                 }
             };
             initializeApp();
