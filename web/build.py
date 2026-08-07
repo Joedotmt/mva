@@ -12,7 +12,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 SRC = ROOT / "src"
 OUT = ROOT / "docs"
-EXPORT = ROOT / "Old Website"
 
 
 PAGES = [
@@ -153,23 +152,6 @@ def active_header(template: str, key: str, section: str | None = None) -> str:
     return template
 
 
-def actual_extension(path: Path) -> str:
-    signature = path.read_bytes()[:12]
-    if signature.startswith(b"\x89PNG\r\n\x1a\n"):
-        return ".png"
-    if signature.startswith(b"\xff\xd8\xff"):
-        return ".jpg"
-    raise ValueError(f"Unsupported image format: {path}")
-
-
-def copy_image(source: Path, destination_dir: Path, name: str | None = None) -> Path:
-    extension = actual_extension(source)
-    destination_dir.mkdir(parents=True, exist_ok=True)
-    destination = destination_dir / ((name or source.stem) + extension)
-    shutil.copy2(source, destination)
-    return destination
-
-
 def rebase_fragment_assets(fragment: str, site_root: str) -> str:
     """Make fragment-local asset URLs work from the generated page directory."""
     return re.sub(
@@ -180,31 +162,7 @@ def rebase_fragment_assets(fragment: str, site_root: str) -> str:
 
 
 def prepare_assets() -> None:
-    assets_out = OUT / "assets"
-    shutil.copytree(SRC / "assets", assets_out, dirs_exist_ok=True)
-
-    shared = assets_out / "images" / "shared"
-    copy_image(EXPORT / "27416dec8a25529529f66f91f4cdcf16.jpg", shared, "logo")
-    copy_image(EXPORT / "7d126d7e190beab477d8a0764fa38564.jpg", shared, "favicon")
-    copy_image(EXPORT / "Home" / "a7b9fabe35702470920bcb0dde7ac1cb.jpg", shared, "hero")
-    shared.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(ROOT / "statute" / "logo.svg", shared / "statute-logo.svg")
-
-    groups = {
-        "Home": "home",
-        "Events": "events",
-        "Independence Day": "independence-day",
-        "branding": "branding",
-        "OLD Branding": "old-branding",
-    }
-    hero_name = "a7b9fabe35702470920bcb0dde7ac1cb.jpg"
-    for source_name, output_name in groups.items():
-        source_dir = EXPORT / source_name
-        destination_dir = assets_out / "images" / output_name
-        for image_path in sorted(source_dir.glob("*.jpg")):
-            if image_path.name == hero_name:
-                continue
-            copy_image(image_path, destination_dir)
+    shutil.copytree(SRC / "assets", OUT / "assets", dirs_exist_ok=True)
 
 
 def build_pages() -> None:

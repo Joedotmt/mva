@@ -11,8 +11,8 @@ from urllib.parse import unquote, urlsplit
 
 
 ROOT = Path(__file__).resolve().parent
+SRC = ROOT / "src"
 OUT = ROOT / "docs"
-EXPORT = ROOT / "Old Website"
 
 CANONICAL_PAGES = {
     "index.html": "https://veterans.mt/",
@@ -187,8 +187,8 @@ def audit_css(path: Path, errors: list[str]) -> None:
 def verify_event_assets(errors: list[str]) -> None:
     source_stems = {
         path.stem
-        for path in (EXPORT / "Events").glob("*.jpg")
-        if path.name != "a7b9fabe35702470920bcb0dde7ac1cb.jpg"
+        for path in (SRC / "assets" / "images" / "events").iterdir()
+        if path.is_file()
     }
     page = (OUT / "events" / "index.html").read_text(encoding="utf-8")
     referenced_stems = {
@@ -198,7 +198,7 @@ def verify_event_assets(errors: list[str]) -> None:
     missing = sorted(source_stems - referenced_stems)
     unexpected = sorted(referenced_stems - source_stems)
     if missing:
-        errors.append(f"events/index.html: {len(missing)} exported images omitted: {missing}")
+        errors.append(f"events/index.html: {len(missing)} source images omitted: {missing}")
     if unexpected:
         errors.append(f"events/index.html: unexpected image stems: {unexpected}")
     if len(referenced_stems) != 161:
