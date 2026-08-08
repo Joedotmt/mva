@@ -201,8 +201,8 @@ def verify_event_assets(errors: list[str]) -> None:
         errors.append(f"events/index.html: {len(missing)} source images omitted: {missing}")
     if unexpected:
         errors.append(f"events/index.html: unexpected image stems: {unexpected}")
-    if len(referenced_stems) != 161:
-        errors.append(f"events/index.html: expected 161 unique event photos, found {len(referenced_stems)}")
+    if len(referenced_stems) != 180:
+        errors.append(f"events/index.html: expected 180 unique event photos, found {len(referenced_stems)}")
 
 
 def main() -> int:
