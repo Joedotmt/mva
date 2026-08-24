@@ -377,4 +377,315 @@
       mobileQuery.addListener(handleViewportChange);
     }
   });
+
+  onReady(function () {
+    var entries = document.querySelectorAll(".page-events .event-entry");
+    var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    function element(tagName, className, textContent) {
+      var node = document.createElement(tagName);
+
+      if (className) {
+        node.className = className;
+      }
+
+      if (textContent) {
+        node.textContent = textContent;
+      }
+
+      return node;
+    }
+
+    function imageRecord(figure) {
+      var image = figure.querySelector("img");
+
+      return {
+        figure: figure,
+        image: image,
+        src: image.getAttribute("src"),
+        alt: image.getAttribute("alt") || "Event photograph",
+        width: parseInt(image.getAttribute("width"), 10) || 0,
+        height: parseInt(image.getAttribute("height"), 10) || 0
+      };
+    }
+
+    function automaticFeaturedIndex(records) {
+      var bestIndex = 0;
+      var bestScore = -Infinity;
+
+      records.forEach(function (record, index) {
+        var ratio = record.height ? record.width / record.height : 1;
+        var area = record.width * record.height;
+        var landscapeBonus = ratio >= 1.15 && ratio <= 2 ? 4 : 0;
+        var balancedBonus = ratio >= 0.75 && ratio < 1.15 ? 2 : 0;
+        var resolutionBonus = Math.min(area / 1000000, 4);
+        var score = landscapeBonus + balancedBonus + resolutionBonus;
+
+        if (score > bestScore) {
+          bestIndex = index;
+          bestScore = score;
+        }
+      });
+
+      return bestIndex;
+    }
+
+    Array.prototype.forEach.call(entries, function (entry, entryIndex) {
+      var photos = Array.prototype.filter.call(
+        entry.querySelectorAll(".event-photo"),
+        function (photo) {
+          return Boolean(photo.querySelector("img"));
+        }
+      );
+
+      if (photos.length < 5) {
+        return;
+      }
+
+      var records = photos.map(imageRecord);
+      var heading = entry.querySelector(".event-entry__title, h3");
+      var eventName = heading ? heading.textContent.trim() : "this event";
+      var entryContent = entry.querySelector(".event-entry__content") || entry;
+      var requestedIndex = parseInt(entry.getAttribute("data-featured-photo"), 10) - 1;
+      var startingIndex = requestedIndex >= 0 && requestedIndex < records.length
+        ? requestedIndex
+        : automaticFeaturedIndex(records);
+      var baseId = heading && heading.id
+        ? heading.id
+        : "event-photo-story-" + (entryIndex + 1);
+      var galleryTitleId = baseId + "-gallery-title";
+      var galleryStatusId = baseId + "-gallery-status";
+      var stageImageId = baseId + "-gallery-image";
+      var showcase = element("section", "event-showcase");
+      var showcaseHeader = element("div", "event-showcase__header");
+      var showcaseTitle = element("h4", "event-showcase__title", "Moments from the event");
+      var status = element("p", "event-showcase__status");
+      var stage = element("div", "event-showcase__stage");
+      var backdrop = element("img", "event-showcase__backdrop");
+      var stageImage = element("img", "event-showcase__image");
+      var previous = element("button", "event-showcase__control event-showcase__control--previous");
+      var next = element("button", "event-showcase__control event-showcase__control--next");
+      var previousIcon = element("span", "", "‹");
+      var nextIcon = element("span", "", "›");
+      var track = element("div", "event-carousel__track");
+      var thumbnails = [];
+      var sourceLayouts = [];
+      var activeIndex = startingIndex;
+      var pointerStartX = null;
+      var pointerStartY = null;
+      var changeTimer = null;
+
+      entry.classList.add("event-entry--carousel");
+      showcase.setAttribute("aria-labelledby", galleryTitleId);
+      showcaseTitle.id = galleryTitleId;
+      status.id = galleryStatusId;
+      status.setAttribute("aria-live", "polite");
+      status.setAttribute("aria-atomic", "true");
+      stage.setAttribute("aria-describedby", galleryStatusId);
+      stageImage.id = stageImageId;
+      stageImage.loading = "lazy";
+      stageImage.decoding = "async";
+      stageImage.draggable = false;
+      backdrop.alt = "";
+      backdrop.loading = "lazy";
+      backdrop.decoding = "async";
+      backdrop.draggable = false;
+      backdrop.setAttribute("aria-hidden", "true");
+      previous.type = "button";
+      previous.setAttribute("aria-label", "Previous photograph from " + eventName);
+      previous.setAttribute("aria-controls", stageImageId);
+      next.type = "button";
+      next.setAttribute("aria-label", "Next photograph from " + eventName);
+      next.setAttribute("aria-controls", stageImageId);
+      previousIcon.setAttribute("aria-hidden", "true");
+      nextIcon.setAttribute("aria-hidden", "true");
+      previous.appendChild(previousIcon);
+      next.appendChild(nextIcon);
+      track.setAttribute("aria-label", "Choose a photograph from " + eventName);
+
+      records.forEach(function (record, index) {
+        var layout = record.figure.closest(".event-layout");
+        var thumbnail = element("button", "event-carousel__thumbnail");
+        var number = element("span", "event-carousel__number", String(index + 1));
+
+        if (layout && sourceLayouts.indexOf(layout) === -1) {
+          sourceLayouts.push(layout);
+        }
+
+        record.figure.className = "event-carousel__item";
+        record.image.className = "event-carousel__thumbnail-image";
+        record.image.alt = "";
+        record.image.setAttribute("aria-hidden", "true");
+        thumbnail.type = "button";
+        thumbnail.setAttribute(
+          "aria-label",
+          "Show photograph " + (index + 1) + " of " + records.length + " from " + eventName
+        );
+        thumbnail.setAttribute("aria-controls", stageImageId);
+        thumbnail.setAttribute("data-carousel-index", String(index));
+        thumbnail.appendChild(record.image);
+        thumbnail.appendChild(number);
+        record.figure.appendChild(thumbnail);
+        track.appendChild(record.figure);
+        thumbnails.push(thumbnail);
+      });
+
+      sourceLayouts.forEach(function (layout) {
+        Array.prototype.forEach.call(
+          layout.children,
+          function (emptyItem) {
+            if (emptyItem.classList.contains("event-layout__item--empty")) {
+              emptyItem.remove();
+            }
+          }
+        );
+
+        if (!layout.children.length) {
+          layout.remove();
+        } else {
+          layout.classList.add("event-layout--content-only");
+        }
+      });
+
+      showcaseHeader.appendChild(showcaseTitle);
+      showcaseHeader.appendChild(status);
+      stage.appendChild(backdrop);
+      stage.appendChild(stageImage);
+      stage.appendChild(previous);
+      stage.appendChild(next);
+      showcase.appendChild(showcaseHeader);
+      showcase.appendChild(stage);
+      showcase.appendChild(track);
+      entryContent.appendChild(showcase);
+
+      function centerThumbnail(thumbnail) {
+        var left = thumbnail.offsetLeft - ((track.clientWidth - thumbnail.offsetWidth) / 2);
+        var behavior = reducedMotion.matches ? "auto" : "smooth";
+
+        if (typeof track.scrollTo === "function") {
+          track.scrollTo({ left: Math.max(0, left), behavior: behavior });
+        } else {
+          track.scrollLeft = Math.max(0, left);
+        }
+      }
+
+      function updateDimension(attribute, value) {
+        if (value) {
+          stageImage.setAttribute(attribute, String(value));
+          backdrop.setAttribute(attribute, String(value));
+        } else {
+          stageImage.removeAttribute(attribute);
+          backdrop.removeAttribute(attribute);
+        }
+      }
+
+      function showPhoto(index, options) {
+        var settings = options || {};
+        var normalizedIndex = (index + records.length) % records.length;
+        var record = records[normalizedIndex];
+
+        if (settings.animate !== false) {
+          stage.classList.add("is-changing");
+          window.clearTimeout(changeTimer);
+        }
+
+        activeIndex = normalizedIndex;
+        stageImage.src = record.src;
+        stageImage.alt = record.alt;
+        backdrop.src = record.src;
+        updateDimension("width", record.width);
+        updateDimension("height", record.height);
+        status.textContent = "Photo " + (normalizedIndex + 1) + " of " + records.length;
+
+        thumbnails.forEach(function (thumbnail, thumbnailIndex) {
+          var isCurrent = thumbnailIndex === normalizedIndex;
+
+          thumbnail.tabIndex = isCurrent ? 0 : -1;
+
+          if (isCurrent) {
+            thumbnail.setAttribute("aria-current", "true");
+          } else {
+            thumbnail.removeAttribute("aria-current");
+          }
+        });
+
+        if (settings.scroll !== false) {
+          centerThumbnail(thumbnails[normalizedIndex]);
+        }
+
+        if (settings.focusThumbnail) {
+          thumbnails[normalizedIndex].focus();
+        }
+
+        changeTimer = window.setTimeout(function () {
+          stage.classList.remove("is-changing");
+        }, settings.animate === false ? 0 : 180);
+      }
+
+      thumbnails.forEach(function (thumbnail, index) {
+        thumbnail.addEventListener("click", function () {
+          showPhoto(index, { scroll: false });
+        });
+
+        thumbnail.addEventListener("keydown", function (event) {
+          var nextIndex;
+
+          if (event.key === "ArrowRight") {
+            nextIndex = index + 1;
+          } else if (event.key === "ArrowLeft") {
+            nextIndex = index - 1;
+          } else if (event.key === "Home") {
+            nextIndex = 0;
+          } else if (event.key === "End") {
+            nextIndex = records.length - 1;
+          } else {
+            return;
+          }
+
+          event.preventDefault();
+          showPhoto(nextIndex, { focusThumbnail: true });
+        });
+      });
+
+      previous.addEventListener("click", function () {
+        showPhoto(activeIndex - 1);
+      });
+
+      next.addEventListener("click", function () {
+        showPhoto(activeIndex + 1);
+      });
+
+      stage.addEventListener("pointerdown", function (event) {
+        if (!event.isPrimary || event.target.closest("button")) {
+          return;
+        }
+
+        pointerStartX = event.clientX;
+        pointerStartY = event.clientY;
+      });
+
+      stage.addEventListener("pointerup", function (event) {
+        if (pointerStartX === null || pointerStartY === null) {
+          return;
+        }
+
+        var distanceX = event.clientX - pointerStartX;
+        var distanceY = event.clientY - pointerStartY;
+
+        pointerStartX = null;
+        pointerStartY = null;
+
+        if (Math.abs(distanceX) >= 48 && Math.abs(distanceX) > Math.abs(distanceY) * 1.2) {
+          showPhoto(activeIndex + (distanceX < 0 ? 1 : -1));
+        }
+      });
+
+      stage.addEventListener("pointercancel", function () {
+        pointerStartX = null;
+        pointerStartY = null;
+      });
+
+      showPhoto(startingIndex, { animate: false, scroll: false });
+    });
+  });
 })();
