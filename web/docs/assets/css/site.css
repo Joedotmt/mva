@@ -1475,6 +1475,45 @@ hr {
   font-weight: 700;
 }
 
+.member-notice {
+  max-width: 900px;
+}
+
+.member-notice h3 {
+  margin: 0 0 20px;
+}
+
+.language-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid var(--color-charcoal);
+}
+
+.language-tabs button {
+  min-height: 4px;
+  padding: 5px 5px;
+  border: 0;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: transparent;
+}
+
+.language-tabs button[aria-selected="true"] {
+  background: var(--color-charcoal);
+  color: var(--color-white);
+}
+
+.language-tabs button:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.event-poster {
+  width: 300px;
+  max-width: 100%;
+  margin: 24px auto 0;
+}
+
 .event-entry__content {
   min-width: 0;
 }
