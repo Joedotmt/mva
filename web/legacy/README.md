@@ -1,0 +1,1 @@
+This directory retains the original HTML sources, Python builder, and generated site as a migration reference. The active website is maintained in `../src/routes/`, `../src/lib/`, and `../static/` and built with `npm run build` from `web/`.

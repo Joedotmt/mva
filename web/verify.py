@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import sys
 from html.parser import HTMLParser
@@ -11,8 +12,9 @@ from urllib.parse import unquote, urlsplit
 
 
 ROOT = Path(__file__).resolve().parent
-SRC = ROOT / "src"
-OUT = ROOT / "docs"
+STATIC = ROOT / "static"
+OUT = ROOT / "build"
+BASE_PATH = os.environ.get("BASE_PATH", "").rstrip("/")
 
 CANONICAL_PAGES = {
     "index.html": "https://veterans.mt/",
@@ -88,6 +90,8 @@ def local_target(source: Path, reference: str) -> tuple[Path, str]:
     parsed = urlsplit(reference)
     clean_path = unquote(parsed.path)
     if clean_path.startswith("/"):
+        if BASE_PATH and clean_path.startswith(BASE_PATH + "/"):
+            clean_path = clean_path[len(BASE_PATH):]
         target = OUT / clean_path.lstrip("/")
     else:
         target = source.parent / clean_path
@@ -133,11 +137,13 @@ def audit_html(path: Path, expected_canonical: str, errors: list[str]) -> Docume
             continue
         parsed_reference = urlsplit(reference)
         clean_reference_path = unquote(parsed_reference.path)
-        if clean_reference_path.startswith("/"):
+        if clean_reference_path.startswith("/") and not (
+            BASE_PATH and clean_reference_path.startswith(BASE_PATH + "/")
+        ):
             errors.append(f"{label}: root-absolute local reference is not project-pages safe: {reference}")
         if attribute == "href" and clean_reference_path.lower().endswith((".html", ".htm")):
             errors.append(f"{label}: internal page link exposes an HTML filename: {reference}")
-        if any(character.isupper() for character in clean_reference_path):
+        if "_app/immutable/" not in clean_reference_path and any(character.isupper() for character in clean_reference_path):
             errors.append(f"{label}: incorrectly capitalized local URL: {reference}")
         target, fragment = local_target(path, reference)
         try:
@@ -187,7 +193,7 @@ def audit_css(path: Path, errors: list[str]) -> None:
 def verify_event_assets(errors: list[str]) -> None:
     source_stems = {
         path.stem
-        for path in (SRC / "assets" / "images" / "events").iterdir()
+        for path in (STATIC / "assets" / "images" / "events").iterdir()
         if path.is_file()
     }
     page = (OUT / "events" / "index.html").read_text(encoding="utf-8")
@@ -218,6 +224,8 @@ def main() -> int:
         errors.append(f"Unexpected duplicate, legacy, or misplaced page: {name}")
 
     totals = {"images": 0, "iframes": 0}
+    if not (OUT / ".nojekyll").exists():
+        errors.append("Missing .nojekyll marker required for GitHub Pages assets")
     for name, canonical_url in CANONICAL_PAGES.items():
         path = OUT / name
         if not path.exists():
